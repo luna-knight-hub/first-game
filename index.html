@@ -2,148 +2,138 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Trò chơi: Máy tính cơ bản - Lớp 1</title>
+    <title>HỆ THỐNG ÔN TẬP CÁC MÔN HỌC</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f8ff;
+            margin: 0;
+            background-color: #f4f6f9;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
             text-align: center;
             padding: 20px;
         }
-        h1 {
-            color: #2c7be5;
+        .container {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
         }
-        .quiz-box {
+        .column {
             background: white;
-            max-width: 600px;
-            margin: auto;
-            padding: 25px;
-            border-radius: 15px;
+            padding: 15px;
+            width: 30%;
+            border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .question {
-            font-size: 22px;
-            margin-bottom: 20px;
+        h2 {
+            text-align: center;
+            color: #333;
         }
-        .answers button {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            font-size: 18px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            background-color: #e3f2fd;
-        }
-        .answers button:hover {
-            background-color: #bbdefb;
-        }
-        #result {
-            font-size: 20px;
+        .subject {
             margin-top: 15px;
         }
-        #score {
-            font-size: 22px;
-            color: green;
-            margin-top: 20px;
-        }
-        .btn-restart {
-            margin-top: 20px;
-            padding: 12px 25px;
-            font-size: 18px;
-            border: none;
-            border-radius: 10px;
-            background-color: #2c7be5;
+        .subject h3 {
+            background: #2196F3;
             color: white;
-            cursor: pointer;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        ul {
+            list-style-type: none;
+            padding-left: 10px;
+        }
+        ul li {
+            margin: 5px 0;
+        }
+        ul li a {
+            text-decoration: none;
+            color: #4CAF50;
+        }
+        ul li a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
 
-<h1>🖥️ Trò chơi: Máy tính cơ bản</h1>
+<header>
+    <h1>HỆ THỐNG ÔN TẬP CÁC MÔN HỌC</h1>
+</header>
 
-<div class="quiz-box">
-    <div class="question" id="question"></div>
-    <div class="answers" id="answers"></div>
-    <div id="result"></div>
-    <div id="score"></div>
-    <button class="btn-restart" onclick="restartQuiz()">🔁 Chơi lại</button>
+<div class="container">
+
+    <!-- KHỐI 3 -->
+    <div class="column">
+        <h2>KHỐI 3</h2>
+
+        <div class="subject">
+            <h3>Tin học</h3>
+            <ul>
+                <li><a href="#">Bài 1: Làm quen máy tính</a></li>
+                <li><a href="#">Bài 2: Sử dụng chuột</a></li>
+                <li><a href="#">Bài 3: Vẽ bằng Paint</a></li>
+            </ul>
+        </div>
+
+        <div class="subject">
+            <h3>Công nghệ</h3>
+            <ul>
+                <li><a href="#">Bài 1: Dụng cụ học tập</a></li>
+                <li><a href="#">Bài 2: An toàn khi sử dụng</a></li>
+                <li><a href="#">Bài 3: Làm đồ chơi đơn giản</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- KHỐI 4 -->
+    <div class="column">
+        <h2>KHỐI 4</h2>
+
+        <div class="subject">
+            <h3>Tin học</h3>
+            <ul>
+                <li><a href="#">Bài 1: Soạn thảo văn bản</a></li>
+                <li><a href="#">Bài 2: Chèn hình ảnh</a></li>
+                <li><a href="#">Bài 3: Tạo bài trình chiếu</a></li>
+            </ul>
+        </div>
+
+        <div class="subject">
+            <h3>Công nghệ</h3>
+            <ul>
+                <li><a href="#">Bài 1: Lắp ghép mô hình</a></li>
+                <li><a href="#">Bài 2: Sử dụng vật liệu</a></li>
+                <li><a href="#">Bài 3: Quy trình sản xuất</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- KHỐI 5 -->
+    <div class="column">
+        <h2>KHỐI 5</h2>
+
+        <div class="subject">
+            <h3>Tin học</h3>
+            <ul>
+                <li><a href="#">Bài 1: Lập trình Scratch</a></li>
+                <li><a href="#">Bài 2: Tạo trò chơi</a></li>
+                <li><a href="#">Bài 3: Chia sẻ dự án</a></li>
+            </ul>
+        </div>
+
+        <div class="subject">
+            <h3>Công nghệ</h3>
+            <ul>
+                <li><a href="#">Bài 1: Thiết kế sản phẩm</a></li>
+                <li><a href="#">Bài 2: Lắp ráp đơn giản</a></li>
+                <li><a href="#">Bài 3: Đánh giá sản phẩm</a></li>
+            </ul>
+        </div>
+    </div>
+
 </div>
-
-<script>
-const quizData = [
-    { question: "Máy tính dùng để làm gì?", answers: ["Học tập", "Ăn cơm", "Ngủ"], correct: 0 },
-    { question: "Màn hình dùng để làm gì?", answers: ["Hiển thị hình ảnh", "Gõ chữ", "Nghe nhạc"], correct: 0 },
-    { question: "Chuột máy tính dùng để?", answers: ["Điều khiển", "Uống nước", "Vẽ tranh giấy"], correct: 0 },
-    { question: "Bàn phím dùng để?", answers: ["Gõ chữ", "Xem phim", "Chụp ảnh"], correct: 0 },
-    { question: "Máy tính có điện mới dùng được không?", answers: ["Có", "Không", "Không biết"], correct: 0 },
-    { question: "Thiết bị nào dùng để nghe âm thanh?", answers: ["Loa", "Chuột", "Bàn phím"], correct: 0 },
-    { question: "Máy tính có giúp học online không?", answers: ["Có", "Không", "Chỉ để chơi"], correct: 0 },
-    { question: "Bật máy tính cần làm gì?", answers: ["Nhấn nút nguồn", "Đập máy", "Lắc máy"], correct: 0 },
-    { question: "Ngồi máy tính cần?", answers: ["Ngồi ngay ngắn", "Nằm", "Chạy nhảy"], correct: 0 },
-    { question: "Máy tính có phải đồ chơi không?", answers: ["Không", "Có", "Lúc có lúc không"], correct: 0 },
-    { question: "Chuột có mấy nút chính?", answers: ["2 nút", "1 nút", "5 nút"], correct: 0 },
-    { question: "Mắt nhìn vào đâu khi dùng máy?", answers: ["Màn hình", "Bàn phím", "Chuột"], correct: 0 },
-    { question: "Dùng máy lâu có tốt không?", answers: ["Không tốt", "Rất tốt", "Không sao"], correct: 0 },
-    { question: "Trước khi dùng máy cần?", answers: ["Xin phép người lớn", "Tự ý dùng", "Không cần"], correct: 0 },
-    { question: "Máy tính giúp em làm gì?", answers: ["Học và chơi", "Ngủ", "Ăn uống"], correct: 0 }
-];
-
-let currentQuestion = 0;
-let score = 0;
-
-function loadQuestion() {
-    document.getElementById("result").innerText = "";
-    document.getElementById("score").innerText = "";
-    const q = quizData[currentQuestion];
-    document.getElementById("question").innerText = 
-        `Câu ${currentQuestion + 1}: ${q.question}`;
-    const answersDiv = document.getElementById("answers");
-    answersDiv.innerHTML = "";
-    q.answers.forEach((answer, index) => {
-        const btn = document.createElement("button");
-        btn.innerText = answer;
-        btn.onclick = () => checkAnswer(index);
-        answersDiv.appendChild(btn);
-    });
-}
-
-function checkAnswer(index) {
-    const correct = quizData[currentQuestion].correct;
-    if (index === correct) {
-        document.getElementById("result").innerText = "✅ Đúng rồi!";
-        score++;
-    } else {
-        document.getElementById("result").innerText = "❌ Chưa đúng!";
-    }
-    currentQuestion++;
-    setTimeout(() => {
-        if (currentQuestion < quizData.length) {
-            loadQuestion();
-        } else {
-            showScore();
-        }
-    }, 800);
-}
-
-function showScore() {
-    document.getElementById("question").innerText = "🎉 Hoàn thành trò chơi!";
-    document.getElementById("answers").innerHTML = "";
-    document.getElementById("result").innerText = "";
-    document.getElementById("score").innerText =
-        `Điểm của em: ${score} / ${quizData.length}`;
-}
-
-function restartQuiz() {
-    currentQuestion = 0;
-    score = 0;
-    loadQuestion();
-}
-
-loadQuestion();
-</script>
 
 </body>
 </html>
