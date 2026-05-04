@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Ôn tập Tương tác - Công nghệ Lớp 5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Chosen Palette: Warm Neutrals with Sky Blue & Emerald Accents -->
+    <!-- Application Structure Plan: The SPA is designed as a "Learning Dashboard & Interactive Quiz Arena". It translates the static 15-set question document into a gamified, explorable platform. 
+         - Section 1 (Dashboard): Provides an overview of the curriculum structure and difficulty levels using charts, giving educators and students a macro-view of the content.
+         - Section 2 (Topic Explorer): A grid layout acting as a visual syllabus. It breaks down the 15 sets into digestible, clickable modules.
+         - Section 3 (Quiz Arena): An interactive testing interface that provides immediate feedback, transforming passive reading into active recall and learning.
+         This structure was chosen to maximize user engagement, making the extensive 150-question bank feel approachable and organized. -->
+    <!-- Visualization & Content Choices: 
+         - Report Info: Question difficulty distribution -> Goal: Inform -> Viz: Doughnut Chart (Chart.js) -> Interaction: Hover tooltips -> Justification: Clearly shows the 70/20/10 split of Easy/Medium/Hard questions. 
+         - Report Info: Curriculum categorization -> Goal: Organize/Compare -> Viz: Bar Chart (Chart.js) -> Interaction: Hover tooltips -> Justification: Groups the 15 sets into logical themes (Theory, Devices, Models).
+         - Report Info: 15 Sets of Questions -> Goal: Inform & Test -> Presentation: Interactive Quiz Cards -> Interaction: Clickable options with instant color-coded feedback -> Justification: Active learning is vastly superior to passive reading for review material.
+         - Library/Method: Chart.js for all data viz, Vanilla JS for quiz logic, Tailwind for layout.
+         - Confirming NO SVG/Mermaid. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .option-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .option-btn:hover:not(:disabled) {
+            transform: translateX(5px);
+            border-color: #0ea5e9;
+            background-color: #f0f9ff;
+        }
+
+        .correct-ans {
+            background-color: #dcfce7 !important;
+            border-color: #22c55e !important;
+            color: #166534 !important;
+        }
+
+        .wrong-ans {
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            color: #991b1b !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <header class="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="goHome()">
+                <div class="text-3xl">&#128218;</div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800 leading-tight">Công Nghệ 5</h1>
+                    <p class="text-xs text-slate-500 font-medium tracking-wide">KẾT NỐI TRI THỨC VỚI CUỘC SỐNG</p>
+                </div>
+            </div>
+            <nav class="hidden md:flex space-x-6">
+                <button onclick="goHome()" class="text-slate-600 hover:text-sky-600 font-medium transition-colors">&#127968; Trang chủ</button>
+                <button onclick="scrollToTopics()" class="text-slate-600 hover:text-sky-600 font-medium transition-colors">&#128221; Danh sách bài tập</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full" id="main-content">
+        
+        <div id="view-dashboard" class="space-y-12 fade-in">
+            <section class="text-center max-w-3xl mx-auto pt-8 pb-4">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-4 tracking-tight">Hệ thống Ôn tập Tương tác Toàn diện</h2>
+                <p class="text-lg text-slate-600 leading-relaxed">
+                    Ứng dụng được tổng hợp từ 150 câu hỏi bám sát chương trình sách giáo khoa Công nghệ lớp 5. 
+                    Khám phá dữ liệu thống kê bên dưới và nhấp vào từng chủ đề để bắt đầu trải nghiệm học tập và kiểm tra kiến thức trực tiếp.
+                </p>
+            </section>
+
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-panel p-6 rounded-2xl flex flex-col">
+                    <div class="mb-4">
+                        <h3 class="text-xl font-bold text-slate-800">&#128202; Phân bổ mức độ câu hỏi</h3>
+                        <p class="text-sm text-slate-500 mt-1">Cấu trúc 150 câu hỏi theo ma trận năng lực (70% Dễ - 20% Trung bình - 10% Nâng cao).</p>
+                    </div>
+                    <div class="flex-grow flex items-center justify-center">
+                        <div class="chart-container w-full">
+                            <canvas id="difficultyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl flex flex-col">
+                    <div class="mb-4">
+                        <h3 class="text-xl font-bold text-slate-800">&#128200; Phân loại chủ đề học tập</h3>
+                        <p class="text-sm text-slate-500 mt-1">Sự phân bổ 15 bộ câu hỏi theo các nhóm nội dung chính trong chương trình.</p>
+                    </div>
+                    <div class="flex-grow flex items-center justify-center">
+                        <div class="chart-container w-full">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="topics-section" class="pt-8">
+                <div class="mb-8 border-b border-slate-200 pb-4">
+                    <h3 class="text-2xl font-bold text-slate-800">&#128187; Danh mục 15 Bộ câu hỏi</h3>
+                    <p class="text-slate-600 mt-2">Lựa chọn một chủ đề dưới đây để bắt đầu ôn tập. Mỗi bộ gồm 10 câu hỏi trắc nghiệm tương tác.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6" id="topic-grid">
+                </div>
+            </section>
+        </div>
+
+        <div id="view-quiz" class="hidden max-w-4xl mx-auto fade-in">
+            <div class="mb-6 flex items-center justify-between">
+                <button onclick="goHome()" class="flex items-center text-sky-600 hover:text-sky-800 font-semibold bg-sky-50 px-4 py-2 rounded-lg transition-colors">
+                    &#8592; Quay lại danh sách
+                </button>
+                <div class="text-sm font-bold text-slate-500 bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-100" id="quiz-progress-text">
+                    Câu 1 / 10
+                </div>
+            </div>
+
+            <div class="glass-panel p-6 md:p-10 rounded-2xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 h-1 bg-sky-500 transition-all duration-300" id="quiz-progress-bar" style="width: 10%;"></div>
+                
+                <div class="mb-2">
+                    <span class="inline-block px-3 py-1 text-xs font-bold rounded-full mb-4 uppercase tracking-wider" id="question-difficulty-badge"></span>
+                </div>
+                
+                <h2 class="text-2xl font-bold text-slate-800 mb-2" id="quiz-topic-title">Tên bài học</h2>
+                
+                <div class="min-h-[250px] flex flex-col justify-center my-6">
+                    <h3 class="text-xl md:text-2xl font-medium text-slate-700 leading-snug mb-8" id="question-text">
+                        Nội dung câu hỏi sẽ hiển thị ở đây?
+                    </h3>
+                    
+                    <div class="space-y-3" id="options-container">
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-between items-center border-t border-slate-100 pt-6">
+                    <div id="feedback-container" class="text-lg font-bold opacity-0 transition-opacity duration-300"></div>
+                    <button id="next-btn" onclick="nextQuestion()" class="hidden bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-xl transition-colors shadow-md">
+                        Câu tiếp theo &#8594;
+                    </button>
+                </div>
+            </div>
+
+            <div id="quiz-result" class="hidden glass-panel p-10 rounded-2xl text-center mt-8 fade-in">
+                <div class="text-6xl mb-4">&#127942;</div>
+                <h3 class="text-3xl font-bold text-slate-800 mb-2">Hoàn thành bộ câu hỏi!</h3>
+                <p class="text-lg text-slate-600 mb-6">Bạn đã trả lời đúng <span id="score-display" class="font-bold text-sky-600 text-2xl">0</span> / 10 câu.</p>
+                <button onclick="goHome()" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-8 rounded-xl transition-colors shadow-md">
+                    Trở về Trang chủ
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 text-center text-sm text-slate-500">
+            Hệ thống ôn tập minh họa - Sách giáo khoa Công nghệ lớp 5 - Bộ Kết nối tri thức với cuộc sống.
+        </div>
+    </footer>
+
+    <script>
+        const appData = [
+            {
+                id: 1,
+                title: "Công nghệ trong đời sống",
+                icon: "🌎",
+                category: "Lý thuyết cơ bản",
+                questions: [
+                    { q: "Đối tượng nào sau đây được coi là sản phẩm công nghệ?", options: ["Cây xanh tự nhiên.", "Máy tính xách tay.", "Tảng đá ven suối.", "Mặt trời."], ans: 1, diff: "Dễ" },
+                    { q: "Công dụng chính của chiếc tủ lạnh là gì?", options: ["Để giải trí.", "Để chiếu sáng.", "Để bảo quản thực phẩm.", "Để nghe nhạc."], ans: 2, diff: "Dễ" },
+                    { q: "Thiết bị nào dùng để thu tín hiệu truyền hình và phát hình ảnh, âm thanh?", options: ["Máy thu thanh (Radio).", "Máy thu hình (Ti vi).", "Điện thoại.", "Quạt điện."], ans: 1, diff: "Dễ" },
+                    { q: "Vai trò của công nghệ đối với đời sống con người là gì?", options: ["Làm cho đời sống khó khăn hơn.", "Giúp con người làm việc nhanh, hiệu quả và tiện nghi hơn.", "Chỉ để phục vụ giải trí.", "Không có vai trò gì quan trọng."], ans: 1, diff: "Dễ" },
+                    { q: "Đâu là hành vi sử dụng công nghệ an toàn?", options: ["Vừa sạc điện thoại vừa chơi game.", "Tự ý tháo rời các linh kiện của ti vi khi đang cắm điện.", "Tắt các thiết bị điện khi không sử dụng.", "Cắm nhiều thiết bị công suất lớn vào cùng một ổ điện."], ans: 2, diff: "Dễ" },
+                    { q: "Sản phẩm công nghệ nào giúp con người di chuyển nhanh hơn?", options: ["Máy giặt.", "Máy bay.", "Máy sấy tóc.", "Máy hút bụi."], ans: 1, diff: "Dễ" },
+                    { q: "Khi sử dụng sản phẩm công nghệ, chúng ta cần tuân thủ điều gì?", options: ["Làm theo ý thích của mình.", "Không cần đọc hướng dẫn sử dụng.", "Tuân thủ hướng dẫn sử dụng của nhà sản xuất.", "Chỉ sử dụng khi thiết bị đã hỏng."], ans: 2, diff: "Dễ" },
+                    { q: "Tại sao cùng một chức năng bảo quản thực phẩm nhưng người ta lại chế tạo ra nhiều loại tủ lạnh khác nhau?", options: ["Để phù hợp với nhu cầu và không gian sử dụng của từng gia đình.", "Để tăng giá bán sản phẩm.", "Do nhà sản xuất thích làm vậy.", "Để tiết kiệm nguyên liệu sản xuất."], ans: 0, diff: "Trung bình" },
+                    { q: "Việc lạm dụng quá nhiều các sản phẩm công nghệ giải trí có thể gây tác hại gì?", options: ["Giúp học tập tốt hơn.", "Có thể gây cận thị và giảm sự tương tác trực tiếp với mọi người.", "Giúp cơ thể khỏe mạnh hơn.", "Không có tác hại nào."], ans: 1, diff: "Trung bình" },
+                    { q: "Mối quan hệ giữa công nghệ và môi trường thông qua việc sử dụng pin?", options: ["Pin là nguồn năng lượng sạch tuyệt đối.", "Pin giúp giảm rác thải sinh hoạt.", "Giúp thiết bị hoạt động tiện lợi, nhưng nếu không xử lý đúng cách sẽ gây ô nhiễm môi trường.", "Sử dụng càng nhiều pin càng tốt cho môi trường."], ans: 2, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 2,
+                title: "Sáng chế công nghệ",
+                icon: "💡",
+                category: "Lý thuyết cơ bản",
+                questions: [
+                    { q: "Ai là người được mệnh danh là 'Vua sáng chế' với phát minh ra bóng đèn sợi đốt?", options: ["Alexander Graham Bell.", "Thomas Edison.", "Anh em nhà Wright.", "Leonardo da Vinci."], ans: 1, diff: "Dễ" },
+                    { q: "Sản phẩm sáng chế nào giúp con người có thể nói chuyện với nhau từ khoảng cách xa?", options: ["Xe đạp.", "Điện thoại.", "Bút bi.", "Thước kẻ."], ans: 1, diff: "Dễ" },
+                    { q: "Việc sáng chế ra máy bay giúp con người điều gì?", options: ["Đi lại dưới nước nhanh hơn.", "Chinh phục bầu trời và di chuyển giữa các quốc gia nhanh chóng.", "Nấu ăn ngon hơn.", "Quét dọn nhà cửa sạch hơn."], ans: 1, diff: "Dễ" },
+                    { q: "Để trở thành một nhà sáng chế, con người cần có đức tính gì hàng đầu?", options: ["Sự lười biếng.", "Óc quan sát, sự tò mò và kiên trì.", "Chỉ cần có nhiều tiền.", "Thích bỏ cuộc khi gặp khó khăn."], ans: 1, diff: "Dễ" },
+                    { q: "Sáng chế công nghệ có mục đích chính là gì?", options: ["Để làm cho cuộc sống phức tạp hơn.", "Để giải quyết các vấn đề thực tiễn và phục vụ nhu cầu con người.", "Chỉ để trưng bày trong bảo tàng.", "Để thay thế hoàn toàn con người."], ans: 1, diff: "Dễ" },
+                    { q: "Chiếc xe hơi đầu tiên sử dụng động cơ đốt trong là sáng chế của ai?", options: ["Karl Benz.", "Henry Ford.", "Isaac Newton.", "Albert Einstein."], ans: 0, diff: "Dễ" },
+                    { q: "Trước khi có điện thoại, con người thường dùng cách nào để liên lạc từ xa?", options: ["Gửi email.", "Nhắn tin qua mạng xã hội.", "Viết thư tay hoặc dùng tín hiệu khói, chim bồ câu.", "Gọi video call."], ans: 2, diff: "Dễ" },
+                    { q: "Một sáng chế được coi là có ý nghĩa khi nào?", options: ["Khi nó đắt tiền nhất.", "Khi nó giải quyết được một vấn đề khó khăn hoặc mang lại sự tiện lợi mới.", "Khi nó có màu sắc đẹp mắt nhất.", "Khi không ai hiểu nó dùng để làm gì."], ans: 1, diff: "Trung bình" },
+                    { q: "Tại sao các sáng chế công nghệ luôn được cải tiến theo thời gian?", options: ["Để đáp ứng nhu cầu ngày càng cao và khắc phục nhược điểm cũ.", "Vì các nhà sáng chế rảnh rỗi.", "Để bắt buộc người dùng phải mua máy mới.", "Do quy định của pháp luật."], ans: 0, diff: "Trung bình" },
+                    { q: "Theo em, một sáng chế 'xanh' là như thế nào?", options: ["Sáng chế có màu xanh lá cây.", "Sử dụng ít năng lượng và không gây hại cho môi trường (Ví dụ: tấm pin mặt trời).", "Sáng chế dành cho người trồng rừng.", "Sáng chế làm từ nhựa rẻ tiền."], ans: 1, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 3,
+                title: "Tìm hiểu thiết kế",
+                icon: "📐",
+                category: "Lý thuyết cơ bản",
+                questions: [
+                    { q: "Thiết kế là gì?", options: ["Là quá trình làm ra sản phẩm ngay lập tức.", "Là quá trình lên ý tưởng, vẽ sơ đồ và tính toán để tạo ra sản phẩm.", "Là việc mua sản phẩm ở cửa hàng.", "Là việc tháo rời sản phẩm đã có."], ans: 1, diff: "Dễ" },
+                    { q: "Bước đầu tiên trong quy trình thiết kế thường là gì?", options: ["Vẽ bản vẽ chi tiết.", "Xác định vấn đề hoặc nhu cầu cần giải quyết.", "Chế tạo sản phẩm mẫu.", "Kiểm tra sản phẩm."], ans: 1, diff: "Dễ" },
+                    { q: "Trong thiết kế, 'Bản vẽ kĩ thuật' dùng để làm gì?", options: ["Để tô màu cho đẹp.", "Để người thợ nhìn vào đó và chế tạo sản phẩm đúng kích thước, hình dáng.", "Để làm quà tặng.", "Để quảng cáo sản phẩm."], ans: 1, diff: "Dễ" },
+                    { q: "Khi thiết kế một chiếc thước kẻ, yếu tố nào là quan trọng nhất?", options: ["Màu sắc rực rỡ.", "Độ chính xác của các vạch chia độ dài.", "Giá tiền đắt.", "Hình dán trang trí."], ans: 1, diff: "Dễ" },
+                    { q: "Tại sao cần làm 'Sản phẩm mẫu' trong quá trình thiết kế?", options: ["Để đem đi bán lấy tiền.", "Để thử nghiệm ý tưởng và kiểm tra tính năng trước khi sản xuất hàng loạt.", "Để trưng bày cho đẹp.", "Vì không làm được sản phẩm thật."], ans: 1, diff: "Dễ" },
+                    { q: "Ai là người thực hiện công việc thiết kế các sản phẩm công nghệ?", options: ["Bác sĩ.", "Nhà thiết kế hoặc kĩ sư.", "Nông dân.", "Ca sĩ."], ans: 1, diff: "Dễ" },
+                    { q: "Vật liệu nào thường dùng để làm mô hình thiết kế đơn giản trong lớp học?", options: ["Sắt thép khối lượng lớn.", "Giấy bìa cứng, que tre, đất nặn.", "Vàng, bạc.", "Bê tông."], ans: 1, diff: "Dễ" },
+                    { q: "Nếu sau khi kiểm tra, sản phẩm mẫu không đạt yêu cầu, nhà thiết kế cần làm gì?", options: ["Vứt bỏ hoàn toàn và đi làm việc khác.", "Tìm ra nguyên nhân lỗi, điều chỉnh lại bản thiết kế và thử nghiệm lại.", "Ép buộc người dùng phải sử dụng sản phẩm lỗi.", "Nói dối là sản phẩm đã đạt yêu cầu."], ans: 1, diff: "Trung bình" },
+                    { q: "Tại sao trong thiết kế, việc chọn vật liệu lại rất quan trọng?", options: ["Vì vật liệu quyết định độ bền, tính thẩm mỹ và giá thành của sản phẩm.", "Vì chỉ có một loại vật liệu duy nhất trên đời.", "Vì vật liệu không ảnh hưởng gì đến sản phẩm.", "Vì nhà thiết kế thích chọn vật liệu đắt tiền."], ans: 0, diff: "Trung bình" },
+                    { q: "Khi thiết kế một sản phẩm đồ chơi trẻ em, yếu tố nào cần ưu tiên hàng đầu?", options: ["Giá thành rẻ.", "Sự an toàn (không sắc nhọn, không độc hại) để bảo vệ sức khỏe.", "Sự phức tạp.", "Kích thước thật lớn."], ans: 1, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 4,
+                title: "Thiết kế sản phẩm (Dự án)",
+                icon: "📝",
+                category: "Lý thuyết cơ bản",
+                questions: [
+                    { q: "Thứ tự đúng của quy trình thiết kế là:", options: ["Hình thành ý tưởng -> Vẽ phác thảo -> Chế tạo mẫu -> Đánh giá.", "Chế tạo mẫu -> Đánh giá -> Hình thành ý tưởng.", "Đánh giá -> Chế tạo mẫu -> Vẽ phác thảo.", "Vẽ phác thảo -> Hình thành ý tưởng -> Chế tạo mẫu."], ans: 0, diff: "Dễ" },
+                    { q: "Bước nào giúp em thể hiện ý tưởng thiết kế lên giấy hoặc máy tính?", options: ["Đánh giá.", "Chế tạo mẫu.", "Vẽ bản phác thảo.", "Sử dụng thử."], ans: 2, diff: "Dễ" },
+                    { q: "Tại sao cần chọn vật liệu phù hợp trước khi chế tạo mẫu?", options: ["Để sản phẩm đẹp hơn.", "Để đảm bảo tính năng, độ bền và tiết kiệm chi phí.", "Để làm theo ý thích.", "Vì vật liệu nào cũng giống nhau."], ans: 1, diff: "Dễ" },
+                    { q: "Khi phác thảo, các thông tin cần thiết nhất bao gồm:", options: ["Màu sắc yêu thích của em.", "Hình dạng, kích thước và tên các bộ phận chính.", "Giá tiền dự kiến.", "Danh sách các bạn cùng nhóm."], ans: 1, diff: "Dễ" },
+                    { q: "Trong dự án thiết kế mô hình, bước 'Hình thành ý tưởng' nhằm mục đích gì?", options: ["Để vẽ hình cho đẹp.", "Xác định sản phẩm cần làm, chức năng và đối tượng sử dụng.", "Để mua vật liệu ngay.", "Để đánh giá sản phẩm."], ans: 1, diff: "Dễ" },
+                    { q: "Sản phẩm mẫu (mô hình) có vai trò gì?", options: ["Là sản phẩm cuối cùng để bán.", "Giúp thử nghiệm ý tưởng và kiểm tra các chức năng của thiết kế.", "Chỉ để trưng bày.", "Không có vai trò gì."], ans: 1, diff: "Dễ" },
+                    { q: "Dụng cụ nào thường dùng để đo và kẻ các đường thẳng khi phác thảo?", options: ["Com pa.", "Thước kẻ.", "Kéo.", "Keo dán."], ans: 1, diff: "Dễ" },
+                    { q: "Tại sao cần ghi chú kích thước cụ thể trong bản phác thảo?", options: ["Để bản vẽ chuyên nghiệp.", "Để đảm bảo khi chế tạo, các chi tiết khớp với nhau và sản phẩm đúng tỉ lệ.", "Để giáo viên dễ chấm điểm.", "Vì bản vẽ nào cũng cần con số."], ans: 1, diff: "Trung bình" },
+                    { q: "Nếu sản phẩm mẫu sau khi chế tạo không hoạt động được, em cần làm gì?", options: ["Vứt đi và làm cái mới.", "Kiểm tra lại từng bước, tìm lỗi ở phần thiết kế hoặc lắp ráp để điều chỉnh.", "Giấu lỗi đi và nộp bài.", "Nhờ người khác làm hộ."], ans: 1, diff: "Trung bình" },
+                    { q: "Đề xuất tiêu chí đánh giá cho 'Thùng rác thông minh' tự chế?", options: ["Phải có màu xanh và thật to.", "Khả năng tự mở nắp khi có người đến gần và tính thẩm mỹ cao.", "Phải làm bằng sắt và rất nặng.", "Chỉ cần đựng được rác là đủ."], ans: 1, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 5,
+                title: "Sử dụng điện thoại",
+                icon: "📱",
+                category: "Thiết bị gia đình",
+                questions: [
+                    { q: "Số điện thoại nào được dùng để gọi cấp cứu y tế tại Việt Nam?", options: ["113.", "114.", "115.", "111."], ans: 2, diff: "Dễ" },
+                    { q: "Hành động nào sau đây thể hiện sự lịch sự khi nghe điện thoại?", options: ["Nói thật to ở nơi đông người.", "Ngắt lời người đang nói.", "Chào hỏi lễ phép và nói năng rõ ràng, ngắn gọn.", "Không cần giới thiệu mình là ai."], ans: 2, diff: "Dễ" },
+                    { q: "Khi đang ở rạp chiếu phim hoặc thư viện, em nên để điện thoại ở chế độ nào?", options: ["Âm lượng lớn nhất.", "Chế độ rung hoặc im lặng.", "Vừa nghe vừa bật loa ngoài.", "Để chuông bình thường."], ans: 1, diff: "Dễ" },
+                    { q: "Để trả lời cuộc gọi đến, em thường nhấn vào nút có màu gì?", options: ["Màu đỏ.", "Màu vàng.", "Màu xanh.", "Màu đen."], ans: 2, diff: "Dễ" },
+                    { q: "Chức năng 'Danh bạ' trong điện thoại dùng để làm gì?", options: ["Để chơi game.", "Để lưu trữ tên và số điện thoại của mọi người.", "Để xem video.", "Để chụp ảnh."], ans: 1, diff: "Dễ" },
+                    { q: "Tại sao không nên vừa sạc pin vừa sử dụng điện thoại thời gian dài?", options: ["Làm điện thoại nhanh hết pin hơn.", "Có nguy cơ gây cháy nổ và ảnh hưởng đến tuổi thọ pin.", "Dây sạc sẽ bị ngắn.", "Điện thoại sẽ không đẹp."], ans: 1, diff: "Dễ" },
+                    { q: "Khi người lạ gọi điện yêu cầu cung cấp địa chỉ nhà, em nên làm gì?", options: ["Cung cấp ngay.", "Không cung cấp và báo ngay cho bố mẹ hoặc người lớn biết.", "Hỏi họ có quà gì không rồi mới nói.", "Tắt máy và không nói gì."], ans: 1, diff: "Dễ" },
+                    { q: "Việc sử dụng điện thoại quá nhiều (trên 3 tiếng/ngày) có tác hại gì cho học sinh?", options: ["Giúp học giỏi hơn.", "Gây mỏi mắt, giảm tập trung và hạn chế vận động thể chất.", "Làm điện thoại bền hơn.", "Không có tác hại nào."], ans: 1, diff: "Trung bình" },
+                    { q: "Tại sao cần để chế độ máy bay khi đi trên máy bay?", options: ["Tiết kiệm pin.", "Tránh làm nhiễu tín hiệu liên lạc và dẫn đường của máy bay.", "Để hành khách không nói chuyện riêng.", "Vì quy định thích như vậy."], ans: 1, diff: "Trung bình" },
+                    { q: "Thế nào là sử dụng điện thoại thông minh một cách 'thông minh'?", options: ["Sử dụng loại điện thoại đắt tiền nhất.", "Sử dụng phục vụ học tập, liên lạc khi cần thiết và cân đối thời gian hợp lý.", "Chơi game liên tục.", "Biết tất cả mật khẩu của người khác."], ans: 1, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 6,
+                title: "Sử dụng tủ lạnh",
+                icon: "❄",
+                category: "Thiết bị gia đình",
+                questions: [
+                    { q: "Ngăn nào của tủ lạnh có nhiệt độ thấp nhất dùng để làm đá?", options: ["Ngăn mát.", "Ngăn đựng rau củ.", "Ngăn đông.", "Cánh tủ."], ans: 2, diff: "Dễ" },
+                    { q: "Thực phẩm nào sau đây cần được bảo quản ở ngăn mát tủ lạnh?", options: ["Kem.", "Cá tươi để lâu ngày.", "Rau, củ, quả và sữa.", "Đá viên."], ans: 2, diff: "Dễ" },
+                    { q: "Hành động nào giúp tủ lạnh hoạt động bền bỉ và tiết kiệm điện?", options: ["Mở cửa tủ liên tục.", "Đóng kín cửa tủ sau khi sử dụng.", "Cho thức ăn còn nóng vào tủ ngay.", "Để tủ sát vách tường không có khe hở."], ans: 1, diff: "Dễ" },
+                    { q: "Vì sao thực phẩm chín cần được đậy kín khi để trong tủ lạnh?", options: ["Để mau lạnh hơn.", "Tránh bị lẫn mùi và ngăn vi khuẩn xâm nhập.", "Để tiết kiệm không gian.", "Để trông đẹp hơn."], ans: 1, diff: "Dễ" },
+                    { q: "Vị trí đặt tủ lạnh nào là phù hợp nhất trong nhà?", options: ["Cạnh bếp gas.", "Nơi có ánh nắng trực tiếp.", "Nơi khô ráo, thoáng mát và bằng phẳng.", "Trong phòng tắm."], ans: 2, diff: "Dễ" },
+                    { q: "Nút điều chỉnh nhiệt độ trong tủ lạnh dùng để làm gì?", options: ["Bật đèn tủ lạnh.", "Thay đổi độ lạnh phù hợp với lượng thực phẩm.", "Làm cho tủ lạnh chạy nhanh hơn.", "Hẹn giờ tắt tủ lạnh."], ans: 1, diff: "Dễ" },
+                    { q: "Khi muốn vệ sinh tủ lạnh, bước quan trọng nhất về an toàn là gì?", options: ["Lấy thực phẩm ra.", "Chuẩn bị khăn lau.", "Rút phích cắm điện.", "Mở hết cửa tủ."], ans: 2, diff: "Dễ" },
+                    { q: "Tại sao không nên để quá nhiều thực phẩm che kín lỗ thông gió tủ lạnh?", options: ["Thực phẩm sẽ bị đóng băng.", "Cản trở luồng khí lạnh lưu thông, gây tốn điện và thực phẩm không tươi.", "Tủ lạnh sẽ phát ra tiếng ồn lớn.", "Đèn tủ lạnh sẽ không sáng."], ans: 1, diff: "Trung bình" },
+                    { q: "Giải thích vì sao không nên để thức ăn còn nóng vào tủ lạnh?", options: ["Làm tủ lạnh bị bẩn.", "Nhiệt độ thức ăn làm nhiệt độ trong tủ tăng đột ngột, gây tốn điện và hại máy nén.", "Thức ăn sẽ mất chất dinh dưỡng ngay.", "Cửa tủ sẽ bị kẹt."], ans: 1, diff: "Trung bình" },
+                    { q: "Dấu hiệu cho thấy tủ lạnh đang bị hỏng hoặc hoạt động không bình thường?", options: ["Tủ không lạnh, tiếng kêu to, cửa không đóng kín do hỏng gioăng cao su.", "Tủ lạnh có đèn sáng.", "Tủ làm đá nhanh, ngăn mát có rau.", "Tủ lạnh có 2 cánh."], ans: 0, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 7,
+                title: "Sử dụng máy thu hình (Ti vi)",
+                icon: "📺",
+                category: "Thiết bị gia đình",
+                questions: [
+                    { q: "Chức năng chính của máy thu hình (ti vi) là gì?", options: ["Thu âm thanh.", "Thu và phát hình ảnh, âm thanh từ đài truyền hình.", "Soạn thảo văn bản.", "Giặt quần áo."], ans: 1, diff: "Dễ" },
+                    { q: "Thiết bị giúp em điều khiển ti vi từ xa gọi là gì?", options: ["Ăng-ten.", "Loa.", "Điều khiển từ xa (Remote control).", "Phích cắm."], ans: 2, diff: "Dễ" },
+                    { q: "Khoảng cách xem ti vi an toàn cho mắt phụ thuộc vào yếu tố nào?", options: ["Kích thước màn hình ti vi.", "Giá tiền của ti vi.", "Nhãn hiệu của ti vi.", "Màu sắc của vỏ ti vi."], ans: 0, diff: "Dễ" },
+                    { q: "Xem ti vi quá nhiều và quá gần sẽ gây hại gì cho sức khỏe?", options: ["Giúp tai nghe rõ hơn.", "Gây mỏi mắt, khô mắt và có nguy cơ bị cận thị.", "Giúp thông minh hơn.", "Làm cơ thể khỏe mạnh hơn."], ans: 1, diff: "Dễ" },
+                    { q: "Chương trình nào phù hợp với lứa tuổi học sinh lớp 5?", options: ["Phim hoạt hình, khoa học vui.", "Phim hành động bạo lực.", "Các chương trình kinh doanh.", "Phim kinh dị."], ans: 0, diff: "Dễ" },
+                    { q: "Khi có sấm sét lớn, hành động nào đảm bảo an toàn cho ti vi?", options: ["Bật âm lượng to.", "Tắt ti vi bằng điều khiển rồi đi ngủ.", "Tắt ti vi và rút phích cắm điện, dây ăng-ten.", "Dùng khăn ướt lau màn hình."], ans: 2, diff: "Dễ" },
+                    { q: "Ánh sáng trong phòng khi xem ti vi nên như thế nào?", options: ["Tối hoàn toàn.", "Sáng vừa phải, tránh để ánh nắng chiếu trực tiếp vào màn hình.", "Chiếu đèn mạnh vào mặt.", "Để đèn nhấp nháy nhiều màu."], ans: 1, diff: "Dễ" },
+                    { q: "Tại sao trên ti vi thường có các ký hiệu phân loại độ tuổi như P, 13+, 18+?", options: ["Biết giá tiền chương trình.", "Thông báo giờ phát sóng.", "Hướng dẫn người xem chọn nội dung phù hợp với độ tuổi.", "Để trang trí màn hình."], ans: 2, diff: "Trung bình" },
+                    { q: "Lợi ích của việc xem các chương trình thời sự, tin tức trên ti vi?", options: ["Để biết phim hoạt hình mới.", "Cập nhật thông tin về các sự kiện diễn ra trong nước và thế giới.", "Để ti vi bền hơn.", "Không có lợi ích gì."], ans: 1, diff: "Trung bình" },
+                    { q: "Lời khuyên cho bạn đang có thói quen vừa ăn cơm vừa xem ti vi?", options: ["Nên tiếp tục vì sẽ ăn ngon hơn.", "Dừng lại vì làm mất tập trung vào việc ăn, ảnh hưởng tiêu hóa và không tốt cho mắt.", "Nên bật âm lượng thật to.", "Ngồi thật sát ti vi."], ans: 1, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 8,
+                title: "Sử dụng máy thu thanh (Radio)",
+                icon: "📻",
+                category: "Thiết bị gia đình",
+                questions: [
+                    { q: "Máy thu thanh (radio) dùng để:", options: ["Xem phim truyện.", "Thu và phát âm thanh từ các đài phát thanh.", "Chụp ảnh.", "Quét nhà."], ans: 1, diff: "Dễ" },
+                    { q: "Bộ phận giúp radio thu được sóng tốt hơn là:", options: ["Màn hình.", "Ăng-ten.", "Bàn phím.", "Ổ đĩa."], ans: 1, diff: "Dễ" },
+                    { q: "Để nghe đài phát thanh cụ thể, em cần điều chỉnh nút nào?", options: ["Nút âm lượng.", "Nút nguồn.", "Nút dò sóng (Tuning).", "Nút hẹn giờ."], ans: 2, diff: "Dễ" },
+                    { q: "Kênh thông tin radio nổi tiếng về giao thông tại Việt Nam là:", options: ["VTV1.", "VOV Giao thông.", "HTV7.", "VTC14."], ans: 1, diff: "Dễ" },
+                    { q: "Ưu điểm của radio so với các thiết bị giải trí khác là gì?", options: ["Có hình ảnh sống động.", "Nhỏ gọn, dễ di chuyển và có thể vừa nghe vừa làm việc khác.", "Có thể truy cập internet.", "Xem được phim 3D."], ans: 1, diff: "Dễ" },
+                    { q: "Thao tác nào giúp bảo vệ radio khi không sử dụng thời gian dài?", options: ["Cắm điện liên tục.", "Tháo pin ra khỏi máy và để nơi khô ráo.", "Ngâm radio vào nước.", "Để nơi ẩm ướt."], ans: 1, diff: "Dễ" },
+                    { q: "Đài tiếng nói Việt Nam (VOV) phát sóng thông tin gì?", options: ["Tin tức, ca nhạc, kịch truyền thanh, thông tin thời tiết.", "Chỉ phát bài hát thiếu nhi.", "Chỉ phát tin tiếng nước ngoài.", "Các video hài hước."], ans: 0, diff: "Dễ" },
+                    { q: "Nếu âm thanh radio bị rè, em nên làm gì?", options: ["Đập mạnh vào radio.", "Kiểm tra lại ăng-ten, thay đổi hướng máy hoặc dò lại sóng.", "Mang đi vứt.", "Vặn âm lượng tối đa."], ans: 1, diff: "Trung bình" },
+                    { q: "Tại sao trong vùng sâu vùng xa, radio vẫn rất quan trọng?", options: ["Có thể làm đèn pin.", "Sóng radio truyền đi rất xa và máy radio thường tiết kiệm năng lượng, dùng được pin.", "Có thể liên lạc hai chiều.", "Không bao giờ hỏng."], ans: 1, diff: "Trung bình" },
+                    { q: "Phân biệt sự khác nhau cơ bản giữa Ti vi và Radio.", options: ["Ti vi đắt hơn radio.", "Ti vi truyền tải bằng hình ảnh và âm thanh, radio chỉ truyền tải bằng âm thanh.", "Radio dùng điện, ti vi dùng pin.", "Ti vi nhỏ hơn radio."], ans: 1, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 9,
+                title: "An toàn điện trong gia đình",
+                icon: "⚠️",
+                category: "Thiết bị gia đình",
+                questions: [
+                    { q: "Hành động nào sau đây gây nguy hiểm về điện?", options: ["Dùng tay ướt để bật công tắc điện.", "Rút phích cắm bằng cách cầm vào phần nhựa cách điện.", "Tắt quạt khi không sử dụng.", "Báo người lớn khi thấy dây điện hở."], ans: 0, diff: "Dễ" },
+                    { q: "Biển báo có hình tia sét trong tam giác vàng cảnh báo điều gì?", options: ["Nơi có nước sâu.", "Nguy hiểm về điện áp cao.", "Khu vực cấm quay phim.", "Đường trơn trượt."], ans: 1, diff: "Dễ" },
+                    { q: "Khi thấy dây dẫn điện bị bong tróc lớp vỏ nhựa, em nên làm gì?", options: ["Lấy băng dính thường dán lại.", "Dùng tay sờ xem có điện không.", "Tuyệt đối không chạm vào và báo ngay cho người lớn.", "Mặc kệ vì lõi đồng chưa đứt."], ans: 2, diff: "Dễ" },
+                    { q: "Tại sao không được chơi đùa gần trạm biến áp hay đường dây điện cao thế?", options: ["Bị công an bắt.", "Dễ bị phóng điện gây nguy hiểm đến tính mạng.", "Ở đó rất nóng.", "Ở đó không có chỗ chơi."], ans: 1, diff: "Dễ" },
+                    { q: "Dụng cụ nào dùng để kiểm tra xem một vật có bị rò điện hay không?", options: ["Thước kẻ nhựa.", "Bút thử điện.", "Tua vít cầm tay.", "Kéo cắt giấy."], ans: 1, diff: "Dễ" },
+                    { q: "Hành động nào đúng khi rút phích cắm điện?", options: ["Cầm dây điện kéo mạnh ra.", "Một tay giữ ổ cắm, một tay cầm vào phần phích cắm để rút ra.", "Dùng chân đạp phích cắm ra.", "Nhờ em nhỏ rút hộ."], ans: 1, diff: "Dễ" },
+                    { q: "Khi thấy người bị điện giật, việc đầu tiên cần làm là gì?", options: ["Chạy lại nắm tay người đó kéo ra.", "Gọi điện thoại cho bạn bè.", "Ngắt ngay nguồn điện hoặc dùng vật cách điện tách nạn nhân ra.", "Đổ nước vào người nạn nhân."], ans: 2, diff: "Dễ" },
+                    { q: "Tại sao không nên cắm quá nhiều thiết bị điện công suất lớn vào cùng ổ cắm?", options: ["Vì ổ cắm sẽ bị bẩn.", "Gây quá tải, làm nóng dây dẫn và có nguy cơ gây cháy nổ.", "Các thiết bị sẽ tranh nhau điện.", "Tốn tiền mua thêm ổ cắm."], ans: 1, diff: "Trung bình" },
+                    { q: "Giải thích vì sao nước là chất dẫn điện nguy hiểm trong sinh hoạt?", options: ["Làm hỏng thiết bị.", "Khi tay ướt hoặc sàn nhà có nước, điện có thể truyền qua nước đến cơ thể gây giật điện.", "Làm điện thoại nhanh hết pin.", "Làm dây điện rỉ sét."], ans: 1, diff: "Trung bình" },
+                    { q: "Quy tắc an toàn điện gồm 3 bước dành cho các bạn nhỏ trong phòng học?", options: ["Luôn hỏi ý kiến thầy cô; Không nghịch dây điện; Tắt thiết bị khi ra về.", "Tự ý cắm điện; Vừa dùng vừa chơi; Cắm thật nhiều máy.", "Đổ nước vào máy; Tháo máy ra xem; Nghịch ổ cắm.", "Chạy nhảy trong lớp; La hét to; Để điện sáng cả đêm."], ans: 0, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 10,
+                title: "Mô hình xe điện chạy bằng pin (1)",
+                icon: "🚗",
+                category: "Lắp ráp mô hình",
+                questions: [
+                    { q: "Bộ phận nào cung cấp năng lượng điện cho mô hình xe điện?", options: ["Bánh xe.", "Pin.", "Động cơ điện.", "Thân xe."], ans: 1, diff: "Dễ" },
+                    { q: "Động cơ điện trong mô hình có vai trò gì?", options: ["Làm xe đẹp hơn.", "Chuyển hóa điện năng thành cơ năng làm quay trục xe.", "Lưu trữ điện.", "Làm xe dừng lại."], ans: 1, diff: "Dễ" },
+                    { q: "Để bật hoặc tắt xe điện, chúng ta cần sử dụng bộ phận nào?", options: ["Dây dẫn.", "Công tắc.", "Pin.", "Trục xe."], ans: 1, diff: "Dễ" },
+                    { q: "Dây dẫn trong mô hình xe điện dùng để làm gì?", options: ["Buộc các bộ phận lại.", "Truyền điện từ pin đến động cơ.", "Trang trí cho xe.", "Làm bánh xe."], ans: 1, diff: "Dễ" },
+                    { q: "Vật liệu nào thường dùng làm thân xe cho mô hình đơn giản?", options: ["Sắt khối.", "Giấy bìa cứng, nhựa hoặc gỗ nhẹ.", "Đá cuội.", "Thủy tinh."], ans: 1, diff: "Dễ" },
+                    { q: "Khi lắp pin vào đế pin, em cần chú ý điều gì?", options: ["Lắp tùy ý hướng.", "Lắp đúng cực dương (+) và cực âm (-) theo ký hiệu.", "Lắp pin đã hết điện.", "Lắp càng nhiều pin càng tốt."], ans: 1, diff: "Dễ" },
+                    { q: "Đồ dùng nào dùng để gắn kết các bộ phận bằng nhựa hoặc giấy bìa của xe?", options: ["Thước kẻ.", "Băng dính hoặc keo dán.", "Bút chì.", "Tẩy."], ans: 1, diff: "Dễ" },
+                    { q: "Nếu xe điện không chạy khi đã bật công tắc, em nên kiểm tra những gì?", options: ["Màu sắc xe.", "Kiểm tra pin còn điện không, các đầu nối dây điện có bị hở hoặc lỏng không.", "Trời có nắng không.", "Bánh xe có tròn không."], ans: 1, diff: "Trung bình" },
+                    { q: "Tại sao cần phải lắp thêm công tắc vào mạch điện của xe?", options: ["Để xe chạy nhanh hơn.", "Để chủ động đóng ngắt mạch điện, tiết kiệm pin và điều khiển xe dễ dàng.", "Làm thân xe nặng hơn.", "Dây điện không bị rối."], ans: 1, diff: "Trung bình" },
+                    { q: "Nêu nguyên lý hoạt động của mô hình xe điện chạy bằng pin.", options: ["Pin cung cấp điện -> Dây dẫn truyền điện -> Động cơ quay -> Trục và bánh xe quay làm xe chuyển động.", "Bánh xe quay làm pin có điện.", "Công tắc tự làm xe chạy không cần pin.", "Thân xe nhẹ làm xe tự bay."], ans: 0, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 11,
+                title: "Mô hình xe điện chạy bằng pin (2)",
+                icon: "⚙️",
+                category: "Lắp ráp mô hình",
+                questions: [
+                    { q: "Bộ phận nào tiếp xúc trực tiếp với mặt đường giúp xe di chuyển?", options: ["Trục xe.", "Bánh xe.", "Động cơ.", "Thân xe."], ans: 1, diff: "Dễ" },
+                    { q: "Trục xe có vai trò gì?", options: ["Giữ pin.", "Kết nối bánh xe và truyền chuyển động từ động cơ đến bánh xe.", "Làm xe cao hơn.", "Phát ra âm thanh."], ans: 1, diff: "Dễ" },
+                    { q: "Khi lắp ráp mô hình xe điện, bước nào thực hiện sau khi đã chuẩn bị vật liệu?", options: ["Đem xe đi thi.", "Lắp ráp các bộ phận của xe theo bản thiết kế.", "Vứt bỏ bản vẽ.", "Sơn màu cho xe."], ans: 1, diff: "Dễ" },
+                    { q: "Để xe chạy thẳng, em cần lưu ý điều gì khi lắp trục và bánh xe?", options: ["Lắp trục xe bị chéo.", "Hai trục xe phải song song và các bánh xe phải cân đối.", "Lắp bánh to bánh nhỏ.", "Chỉ cần lắp 1 bánh xe."], ans: 1, diff: "Dễ" },
+                    { q: "Dụng cụ nào dùng để cắt các chi tiết giấy bìa làm thân xe?", options: ["Kéo hoặc dao dọc giấy.", "Búa.", "Kìm.", "Tua vít."], ans: 0, diff: "Dễ" },
+                    { q: "Kiểm tra sản phẩm sau khi lắp ráp nhằm mục đích gì?", options: ["Xem xe đẹp không.", "Đảm bảo xe hoạt động tốt, ổn định và an toàn.", "Để mất thời gian.", "Để khoe với bạn."], ans: 1, diff: "Dễ" },
+                    { q: "Nếu muốn xe chạy nhanh hơn, em có thể cải tiến điều gì?", options: ["Làm thân xe nặng thêm.", "Sử dụng động cơ mạnh hơn hoặc giảm bớt khối lượng không cần thiết của thân xe.", "Thay bánh xe vuông.", "Tháo bỏ pin."], ans: 1, diff: "Dễ" },
+                    { q: "Tác dụng của việc lắp bánh đai (bánh răng) vào trục động cơ và trục bánh xe?", options: ["Trang trí cho xe.", "Truyền chuyển động quay từ động cơ sang trục bánh xe thông qua dây đai.", "Làm xe dừng lại nhanh hơn.", "Giữ cho pin không rơi."], ans: 1, diff: "Trung bình" },
+                    { q: "Tại sao khi lắp ráp xong, nên chạy thử xe trên nhiều bề mặt khác nhau?", options: ["Xem mặt đường nào làm hỏng xe nhanh nhất.", "Kiểm tra độ bám đường, khả năng vượt chướng ngại vật và độ ổn định của xe.", "Vì rảnh rỗi.", "Để làm bẩn bánh xe."], ans: 1, diff: "Trung bình" },
+                    { q: "Nếu sau khi lắp ráp, xe chạy lùi thay vì chạy tiến, em xử lý thế nào?", options: ["Quay ngược thân xe lại.", "Đảo ngược hai đầu dây dẫn điện nối với cực của pin hoặc động cơ.", "Mua động cơ mới.", "Vứt bỏ xe."], ans: 1, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 12,
+                title: "Mô hình máy bay phản lực",
+                icon: "✈️",
+                category: "Lắp ráp mô hình",
+                questions: [
+                    { q: "Bộ phận nào của máy bay có vai trò tạo ra lực nâng giúp máy bay bay được?", options: ["Thân máy bay.", "Cánh máy bay.", "Bánh xe.", "Cửa sổ."], ans: 1, diff: "Dễ" },
+                    { q: "Máy bay phản lực thực tế sử dụng động cơ gì để bay?", options: ["Động cơ hơi nước.", "Động cơ phản lực.", "Bàn đạp chân.", "Cánh buồm."], ans: 1, diff: "Dễ" },
+                    { q: "Trong mô hình máy bay bằng giấy, bộ phận nào giúp giữ thăng bằng?", options: ["Buồng lái.", "Cánh đuôi (ngang và đứng).", "Mũi máy bay.", "Ghế ngồi."], ans: 1, diff: "Dễ" },
+                    { q: "Vật liệu nào sau đây là tốt nhất để làm mô hình máy bay nhẹ và dễ bay?", options: ["Thép tấm.", "Giấy xốp hoặc bìa nhẹ.", "Gạch men.", "Đất sét."], ans: 1, diff: "Dễ" },
+                    { q: "Để các bộ phận máy bay gắn chặt với nhau, em dùng:", options: ["Nước lọc.", "Keo dán chuyên dụng hoặc băng dính hai mặt.", "Sợi dây thừng.", "Đất nặn."], ans: 1, diff: "Dễ" },
+                    { q: "Khi phóng máy bay giấy, lực nào làm máy bay bắt đầu chuyển động về phía trước?", options: ["Lực đẩy của tay người.", "Lực hút của Trái Đất.", "Lực cản của không khí.", "Lực từ trường."], ans: 0, diff: "Dễ" },
+                    { q: "Hình dáng máy bay được thiết kế kiểu gì để giảm lực cản không khí?", options: ["Hình vuông.", "Hình dạng khí động học (thuôn dài, nhọn về phía trước).", "Hình tròn.", "Hình răng cưa."], ans: 1, diff: "Dễ" },
+                    { q: "Tại sao mép trước của cánh máy bay thường được làm hơi cong tròn?", options: ["Trông đẹp hơn.", "Tạo ra sự chênh lệch áp suất không khí, từ đó tạo ra lực nâng.", "Dễ dán keo.", "Để máy bay nặng hơn."], ans: 1, diff: "Trung bình" },
+                    { q: "Các bước cơ bản để lắp ráp mô hình máy bay từ các chi tiết?", options: ["Cắt chi tiết -> Ghép thân -> Lắp cánh chính -> Lắp cánh đuôi -> Trang trí.", "Trang trí -> Cắt chi tiết -> Lắp cánh.", "Lắp cánh đuôi -> Lắp cánh chính -> Cắt chi tiết.", "Dán tùy ý."], ans: 0, diff: "Trung bình" },
+                    { q: "Nếu máy bay mô hình khi bay thường bị chúc đầu xuống đất, em điều chỉnh thế nào?", options: ["Làm cánh máy bay to hơn.", "Giảm khối lượng mũi máy bay hoặc điều chỉnh cánh đuôi ngang hướng nhẹ lên trên.", "Ném mạnh hơn.", "Sơn màu đỏ."], ans: 1, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 13,
+                title: "Mô hình thuyền chạy động cơ điện",
+                icon: "🚤",
+                category: "Lắp ráp mô hình",
+                questions: [
+                    { q: "Bộ phận nào của thuyền đẩy nước để thuyền tiến về phía trước?", options: ["Mạn thuyền.", "Chân vịt.", "Cột buồm.", "Đáy thuyền."], ans: 1, diff: "Dễ" },
+                    { q: "Để mô hình thuyền không bị chìm, mạn thuyền cần như thế nào?", options: ["Nhiều lỗ thông gió.", "Kín và không bị thấm nước.", "Làm bằng sắt thật nặng.", "Thật ngắn."], ans: 1, diff: "Dễ" },
+                    { q: "Năng lượng để làm quay chân vịt của mô hình thuyền lấy từ đâu?", options: ["Gió trời.", "Động cơ điện nối với pin.", "Sức người chèo.", "Ánh sáng đèn."], ans: 1, diff: "Dễ" },
+                    { q: "Vật liệu nào chống thấm nước tốt phù hợp làm mô hình thuyền?", options: ["Giấy báo thường.", "Nhựa, xốp hoặc gỗ đã sơn chống thấm.", "Vải bông.", "Bìa carton không màng nhựa."], ans: 1, diff: "Dễ" },
+                    { q: "Khi lắp động cơ vào thuyền, trục động cơ cần nối với:", options: ["Thân thuyền.", "Chân vịt.", "Pin.", "Công tắc."], ans: 1, diff: "Dễ" },
+                    { q: "Tại sao cần đặt pin và động cơ ở vị trí cân đối trên thuyền?", options: ["Để thuyền không bị nghiêng hoặc lật khi xuống nước.", "Thuyền trông đẹp hơn.", "Tiết kiệm pin.", "Dễ sửa chữa."], ans: 0, diff: "Dễ" },
+                    { q: "Đồ dùng nào giúp ngăn nước thấm vào các khe hở của thuyền?", options: ["Thước kẻ.", "Sáp nến hoặc keo silicon.", "Bút dạ.", "Giấy nhám."], ans: 1, diff: "Dễ" },
+                    { q: "Giải thích vì sao khi chân vịt quay, thuyền lại di chuyển được?", options: ["Chân vịt làm nước nóng lên.", "Chân vịt đẩy nước về phía sau, tạo ra lực đẩy phản hồi đẩy thuyền tiến lên.", "Chân vịt làm thuyền nhẹ đi.", "Chân vịt hút nước vào thuyền."], ans: 1, diff: "Trung bình" },
+                    { q: "Trước khi đưa thuyền ra hồ chạy thử, em nên làm gì?", options: ["Đổ đầy nước vào thuyền.", "Thử nghiệm độ nổi và khả năng vận hành của động cơ trong một chậu nước lớn.", "Tháo hết pin ra.", "Sơn nhiều màu sắc."], ans: 1, diff: "Trung bình" },
+                    { q: "Thuyền chạy chậm mặc dù động cơ quay mạnh, nguyên nhân có thể là?", options: ["Thuyền quá nặng hoặc chân vịt quá nhỏ không phù hợp kích thước thuyền.", "Thuyền màu đen hoặc pin quá đầy.", "Thuyền làm bằng xốp hoặc động cơ mới.", "Nước sạch hoặc công tắc lỏng."], ans: 0, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 14,
+                title: "Đánh giá sản phẩm thủ công",
+                icon: "📋",
+                category: "Ôn tập & Đánh giá",
+                questions: [
+                    { q: "Đánh giá sản phẩm là bước thực hiện khi nào?", options: ["Trước khi làm.", "Trong khi làm.", "Sau khi sản phẩm đã hoàn thành.", "Khi mới có ý tưởng."], ans: 2, diff: "Dễ" },
+                    { q: "Tiêu chí 'Sản phẩm hoạt động tốt' nghĩa là gì?", options: ["Màu sắc đẹp.", "Thực hiện được đúng chức năng như thiết kế ban đầu.", "Tốn nhiều vật liệu.", "Do nhiều bạn làm."], ans: 1, diff: "Dễ" },
+                    { q: "Yếu tố thẩm mỹ của sản phẩm được đánh giá qua điều gì?", options: ["Giá tiền vật liệu.", "Hình dáng cân đối, màu sắc hài hòa, các mối dán sạch sẽ.", "Khối lượng sản phẩm.", "Thời gian làm."], ans: 1, diff: "Dễ" },
+                    { q: "Tại sao cần lắng nghe nhận xét của thầy cô và bạn bè về sản phẩm?", options: ["Biết bạn nào thích mình.", "Nhận ra ưu điểm và hạn chế, từ đó hoàn thiện sản phẩm tốt hơn.", "Để cãi lại bạn.", "Để không phải làm nữa."], ans: 1, diff: "Dễ" },
+                    { q: "Khi trình bày sản phẩm trước lớp, em nên nói về nội dung gì?", options: ["Tên sản phẩm, vật liệu sử dụng, quy trình làm và cách hoạt động.", "Chỉ nói về giá tiền.", "Nói về phim đã xem.", "Không cần nói gì."], ans: 0, diff: "Dễ" },
+                    { q: "Tiêu chí 'An toàn khi sử dụng' đánh giá điều gì?", options: ["Sản phẩm không có cạnh sắc nhọn gây đứt tay, không rò rỉ điện.", "Dùng làm vũ khí.", "Rất đắt tiền.", "Cất trong tủ kính."], ans: 0, diff: "Dễ" },
+                    { q: "Một sản phẩm được coi là sáng tạo khi:", options: ["Giống hệt mẫu giáo viên.", "Có cải tiến mới, độc đáo về hình dáng hoặc chức năng so với mẫu cơ bản.", "Làm nhanh 5 phút.", "Dùng vật liệu đắt nhất."], ans: 1, diff: "Dễ" },
+                    { q: "Tại sao tiêu chí 'Tiết kiệm vật liệu và bảo vệ môi trường' lại quan trọng?", options: ["Làm sản phẩm bé lại.", "Khuyến khích sử dụng vật liệu tái chế, tránh lãng phí và giảm thiểu rác thải.", "Không phải mua vật liệu mới.", "Giáo viên yêu cầu thế."], ans: 1, diff: "Trung bình" },
+                    { q: "Nếu sản phẩm bị đánh giá 'Chưa bền chắc', em khắc phục thế nào?", options: ["Giữ nguyên.", "Gia cố lại các mối nối, sử dụng keo phù hợp hoặc thay thế bộ phận yếu.", "Đổ nước vào cho nặng.", "Vẽ thêm hoa văn."], ans: 1, diff: "Trung bình" },
+                    { q: "Bảng tiêu chí đánh giá cho mô hình 'Xe điện chạy bằng pin' gồm?", options: ["Màu sắc; Cân nặng; Giá tiền.", "Khả năng di chuyển; Độ bền chắc; Tính thẩm mỹ và sáng tạo.", "Tên thành viên; Ngày hoàn thành; Nơi làm.", "Độ cao xe; Số lượng bánh xe; Kiểu dáng pin."], ans: 1, diff: "Nâng cao" }
+                ]
+            },
+            {
+                id: 15,
+                title: "Tổng ôn tập cuối năm",
+                icon: "🎓",
+                category: "Ôn tập & Đánh giá",
+                questions: [
+                    { q: "Sản phẩm công nghệ nào sau đây thuộc lĩnh vực giao thông vận tải?", options: ["Máy thu thanh.", "Máy bay.", "Tủ lạnh.", "Ti vi."], ans: 1, diff: "Dễ" },
+                    { q: "Ai là người tạo ra các bản vẽ kĩ thuật và thiết kế sản phẩm công nghệ?", options: ["Nông dân.", "Kĩ sư / Nhà thiết kế.", "Ca sĩ.", "Bác sĩ."], ans: 1, diff: "Dễ" },
+                    { q: "Khi sử dụng đồ điện trong gia đình, điều quan trọng nhất là:", options: ["Sử dụng thật nhiều cùng lúc.", "Tuân thủ các quy tắc an toàn điện và tiết kiệm năng lượng.", "Không bao giờ lau chùi thiết bị.", "Để thiết bị ở nơi ẩm ướt."], ans: 1, diff: "Dễ" },
+                    { q: "Trong quy trình thiết kế, bước 'Chế tạo mẫu' nhằm mục đích gì?", options: ["Để bán lấy tiền.", "Hiện thực hóa ý tưởng thiết kế thành sản phẩm cụ thể để thử nghiệm.", "Để đánh giá bạn nào lười.", "Để vẽ phác thảo."], ans: 1, diff: "Dễ" },
+                    { q: "Ngăn đá của tủ lạnh dùng để bảo quản loại thực phẩm nào?", options: ["Rau xanh.", "Trái cây chín.", "Thịt, cá tươi sống cần bảo quản lâu ngày.", "Trứng."], ans: 2, diff: "Dễ" },
+                    { q: "Để bảo vệ mắt khi xem ti vi, em cần:", options: ["Ngồi thật gần màn hình.", "Ngồi ở khoảng cách phù hợp và không xem quá lâu.", "Xem trong phòng tối hoàn toàn.", "Vừa nằm vừa xem."], ans: 1, diff: "Dễ" },
+                    { q: "Vật liệu nào sau đây có thể tái chế để làm mô hình thủ công?", options: ["Vỏ chai nhựa, vỏ hộp sữa, bìa carton.", "Thức ăn thừa.", "Khăn giấy đã qua sử dụng.", "Than củi."], ans: 0, diff: "Dễ" },
+                    { q: "Vai trò của sáng chế công nghệ đối với sự phát triển xã hội?", options: ["Làm con người lười biếng hơn.", "Nâng cao năng suất lao động, cải thiện chất lượng cuộc sống và giải quyết vấn đề.", "Làm thế giới phức tạp.", "Phục vụ người giàu."], ans: 1, diff: "Trung bình" },
+                    { q: "Tại sao trước khi làm mô hình, cần phải có bản vẽ phác thảo?", options: ["Giáo viên kiểm tra vẽ.", "Xác định hình dáng, kích thước và cách lắp ráp, giúp quá trình làm chính xác.", "Là quy định bắt buộc.", "Để tốn thêm thời gian."], ans: 1, diff: "Trung bình" },
+                    { q: "Xe đạp điện là một sản phẩm công nghệ đã thay đổi cuộc sống thế nào?", options: ["Giúp đi lại không tốn sức và giảm ô nhiễm môi trường so với xe máy xăng.", "Quét nhà sạch hơn.", "Giúp em học bài.", "Giúp kẻ đường thẳng."], ans: 0, diff: "Nâng cao" }
+                ]
+            }
+        ];
+
+        // --- Application State ---
+        let currentTopic = null;
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answerRevealed = false;
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderDashboard();
+            renderTopicList();
+        });
+
+        // --- View Navigation ---
+        function goHome() {
+            document.getElementById('view-quiz').classList.add('hidden');
+            document.getElementById('view-dashboard').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function scrollToTopics() {
+            document.getElementById('topics-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function openQuiz(topicId) {
+            currentTopic = appData.find(t => t.id === topicId);
+            currentQuestionIndex = 0;
+            score = 0;
+            
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-quiz').classList.remove('hidden');
+            document.getElementById('quiz-result').classList.add('hidden');
+            document.getElementById('quiz-topic-title').innerText = `${currentTopic.icon} ${currentTopic.title}`;
+            
+            renderQuestion();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- Dashboard Rendering ---
+        function renderDashboard() {
+            // Data for Donut Chart (Difficulty)
+            const diffCtx = document.getElementById('difficultyChart').getContext('2d');
+            new Chart(diffCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Mức độ Dễ (70%)', 'Mức độ Trung bình (20%)', 'Mức độ Nâng cao (10%)'],
+                    datasets: [{
+                        data: [105, 30, 15],
+                        backgroundColor: ['#38bdf8', '#fbbf24', '#f43f5e'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Segoe UI' } } },
+                        tooltip: { 
+                            callbacks: { 
+                                label: function(context) { return context.label + ': ' + context.raw + ' câu'; } 
+                            } 
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+
+            // Data for Bar Chart (Categories)
+            const catCtx = document.getElementById('categoryChart').getContext('2d');
+            const categoryCounts = {};
+            appData.forEach(topic => {
+                categoryCounts[topic.category] = (categoryCounts[topic.category] || 0) + 1;
+            });
+            
+            new Chart(catCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(categoryCounts),
+                    datasets: [{
+                        label: 'Số bộ câu hỏi',
+                        data: Object.values(categoryCounts),
+                        backgroundColor: '#0ea5e9',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        x: {
+                            ticks: {
+                                callback: function(value) {
+                                    const label = this.getLabelForValue(value);
+                                    if (label.length > 16) {
+                                        return label.substring(0, 16) + '...';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) { return context[0].label; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTopicList() {
+            const grid = document.getElementById('topic-grid');
+            appData.forEach((topic, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 cursor-pointer flex flex-col items-center text-center group";
+                card.onclick = () => openQuiz(topic.id);
+                
+                card.innerHTML = `
+                    <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">${topic.icon}</div>
+                    <div class="text-xs font-bold text-sky-600 mb-1 tracking-widest uppercase">Bộ ${topic.id}</div>
+                    <h4 class="text-lg font-bold text-slate-800 leading-tight mb-2 group-hover:text-sky-600 transition-colors">${topic.title}</h4>
+                    <span class="mt-auto text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">${topic.category}</span>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- Quiz Logic ---
+        function renderQuestion() {
+            if (currentQuestionIndex >= currentTopic.questions.length) {
+                showResult();
+                return;
+            }
+
+            const qData = currentTopic.questions[currentQuestionIndex];
+            answerRevealed = false;
+
+            // Update Progress
+            const progressPct = ((currentQuestionIndex) / currentTopic.questions.length) * 100;
+            document.getElementById('quiz-progress-bar').style.width = `${progressPct}%`;
+            document.getElementById('quiz-progress-text').innerText = `Câu ${currentQuestionIndex + 1} / ${currentTopic.questions.length}`;
+
+            // Update Badge
+            const badge = document.getElementById('question-difficulty-badge');
+            badge.innerText = `Mức độ: ${qData.diff}`;
+            if (qData.diff === "Dễ") badge.className = "inline-block px-3 py-1 text-xs font-bold rounded-full mb-4 uppercase tracking-wider bg-sky-100 text-sky-700";
+            else if (qData.diff === "Trung bình") badge.className = "inline-block px-3 py-1 text-xs font-bold rounded-full mb-4 uppercase tracking-wider bg-amber-100 text-amber-700";
+            else badge.className = "inline-block px-3 py-1 text-xs font-bold rounded-full mb-4 uppercase tracking-wider bg-rose-100 text-rose-700";
+
+            // Update Text
+            document.getElementById('question-text').innerText = qData.q;
+
+            // Render Options
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            const letters = ['A', 'B', 'C', 'D'];
+            qData.options.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full text-left p-4 rounded-xl border-2 border-slate-200 bg-white font-medium text-slate-700 flex items-center gap-4";
+                btn.onclick = () => selectAnswer(index, btn);
+                btn.innerHTML = `
+                    <span class="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold">${letters[index]}</span>
+                    <span>${optText}</span>
+                `;
+                container.appendChild(btn);
+            });
+
+            // Reset UI states
+            document.getElementById('next-btn').classList.add('hidden');
+            const feedback = document.getElementById('feedback-container');
+            feedback.style.opacity = '0';
+        }
+
+        function selectAnswer(selectedIndex, btnElement) {
+            if (answerRevealed) return;
+            answerRevealed = true;
+
+            const qData = currentTopic.questions[currentQuestionIndex];
+            const isCorrect = selectedIndex === qData.ans;
+            
+            if (isCorrect) score++;
+
+            // Reveal all answers
+            const buttons = document.getElementById('options-container').querySelectorAll('button');
+            buttons.forEach((btn, index) => {
+                btn.disabled = true;
+                btn.classList.remove('hover:bg-f0f9ff', 'cursor-pointer');
+                
+                if (index === qData.ans) {
+                    btn.classList.add('correct-ans');
+                } else if (index === selectedIndex && !isCorrect) {
+                    btn.classList.add('wrong-ans');
+                } else {
+                    btn.style.opacity = '0.5';
+                }
+            });
+
+            // Show feedback
+            const feedback = document.getElementById('feedback-container');
+            if (isCorrect) {
+                feedback.innerHTML = '<span class="text-emerald-500">&#10004; Chính xác!</span>';
+            } else {
+                feedback.innerHTML = '<span class="text-rose-500">&#10006; Chưa chính xác. Đáp án đúng là ' + ['A','B','C','D'][qData.ans] + '.</span>';
+            }
+            feedback.style.opacity = '1';
+
+            // Show next button
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            renderQuestion();
+        }
+
+        function showResult() {
+            document.getElementById('quiz-progress-bar').style.width = '100%';
+            document.querySelector('#view-quiz > .glass-panel').classList.add('hidden');
+            document.getElementById('quiz-result').classList.remove('hidden');
+            document.getElementById('score-display').innerText = score;
+            
+            // Cleanup state to avoid rendering issues on replay
+            document.getElementById('next-btn').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

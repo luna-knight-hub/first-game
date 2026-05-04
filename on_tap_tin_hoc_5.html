@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Ôn Tập Tin Học 5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .correct-bg { background-color: #d1fae5; border-color: #10b981; }
+        .wrong-bg { background-color: #fee2e2; border-color: #ef4444; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-slate-800 font-sans min-h-screen">
+
+<!-- Chosen Palette: Warm Neutrals with Tech Blue and Success Emerald (Amber-50 bg, Slate-800 text, Blue-600 accents, Emerald-500 success) -->
+<!-- Application Structure Plan: Dashboard approach with a sidebar for navigation and a main content area. The structure is chosen to allow students to easily see all 6 review topics, jump between them non-linearly, and track their overall progress via a dashboard view. This transforms a static markdown list into an engaging, gamified assessment tool suitable for 5th graders. -->
+<!-- Visualization & Content Choices: Report Info: 6 Sets of Quiz Questions -> Goal: Assess and track student knowledge -> Viz/Presentation Method: Interactive Quiz Cards and a Bar Chart -> Interaction: Selecting answers, typing inputs, clicking submit, viewing instant feedback and chart updates -> Justification: Active recall and immediate feedback improve learning. A chart provides a visual overview of strengths and weaknesses. -> Library/Method: Vanilla JS for quiz logic, Chart.js for the progress chart. Confirming NO SVG/Mermaid. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<div class="flex flex-col md:flex-row min-h-screen">
+
+    <nav class="w-full md:w-1/4 lg:w-1/5 bg-white shadow-lg z-10 p-4 flex flex-col">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-blue-600">🚀 Tin Học 5</h1>
+            <p class="text-sm text-slate-500">Ôn tập cuối năm</p>
+        </div>
+        <button id="nav-home" class="w-full text-left p-3 mb-2 rounded-lg bg-blue-100 text-blue-700 font-semibold transition-colors">
+            📊 Tổng Quan Kết Quả
+        </button>
+        <div class="mt-4 mb-2 text-sm font-bold text-slate-400 uppercase tracking-wider">Danh sách chủ đề</div>
+        <div id="topic-list" class="flex-1 overflow-y-auto space-y-2">
+        </div>
+    </nav>
+
+    <main class="w-full md:w-3/4 lg:w-4/5 p-4 md:p-8 overflow-y-auto" id="main-content">
+        
+        <div id="view-dashboard" class="fade-in max-w-4xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-slate-100">
+                <h2 class="text-2xl font-bold mb-4 text-slate-800">👋 Chào mừng em đến với góc ôn tập!</h2>
+                <p class="text-slate-600 mb-4">
+                    Ứng dụng này giúp em hệ thống lại toàn bộ kiến thức Tin học lớp 5 qua 6 chủ đề trọng tâm. 
+                    Hãy chọn từng chủ đề ở cột bên trái, hoàn thành các câu hỏi trắc nghiệm và điền từ để kiểm tra kiến thức của mình. 
+                    Biểu đồ bên dưới sẽ theo dõi tiến độ và kết quả của em. Chúc em ôn tập thật tốt!
+                </p>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                    <div class="bg-blue-50 p-4 rounded-xl text-center border border-blue-100">
+                        <div class="text-3xl mb-1">📚</div>
+                        <div class="text-sm text-slate-500">Chủ đề</div>
+                        <div class="text-xl font-bold text-blue-700">6</div>
+                    </div>
+                    <div class="bg-emerald-50 p-4 rounded-xl text-center border border-emerald-100">
+                        <div class="text-3xl mb-1">✅</div>
+                        <div class="text-sm text-slate-500">Đã làm</div>
+                        <div class="text-xl font-bold text-emerald-700" id="stat-completed">0</div>
+                    </div>
+                    <div class="bg-amber-50 p-4 rounded-xl text-center border border-amber-100">
+                        <div class="text-3xl mb-1">⭐</div>
+                        <div class="text-sm text-slate-500">Điểm TB</div>
+                        <div class="text-xl font-bold text-amber-700" id="stat-avg">0/10</div>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-xl text-center border border-purple-100">
+                        <div class="text-3xl mb-1">🏆</div>
+                        <div class="text-sm text-slate-500">Đánh giá</div>
+                        <div class="text-xl font-bold text-purple-700" id="stat-rank">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
+                <h3 class="text-xl font-bold mb-6 text-center text-slate-700">Biểu Đồ Kết Quả Học Tập</h3>
+                <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-quiz" class="hidden fade-in max-w-3xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 mb-6">
+                <div class="flex items-center gap-3 mb-2">
+                    <span id="quiz-icon" class="text-3xl"></span>
+                    <h2 id="quiz-title" class="text-2xl font-bold text-slate-800"></h2>
+                </div>
+                <p class="text-slate-600" id="quiz-intro"></p>
+            </div>
+
+            <div id="quiz-questions" class="space-y-6">
+            </div>
+
+            <div class="mt-8 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <div id="quiz-result-display" class="text-lg font-bold"></div>
+                <button id="btn-submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-md">
+                    Chấm Điểm
+                </button>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    const appData = [
+        {
+            id: 0,
+            icon: "💻",
+            title: "Máy Tính Và Thiết Bị Số",
+            intro: "Chủ đề này kiểm tra kiến thức của em về các bộ phận của máy tính, thiết bị phần cứng, phần mềm, hệ điều hành và các thiết bị số thông minh.",
+            mcqs: [
+                { q: "Thiết bị nào sau đây là thiết bị ra của máy tính?", opts: ["A. Chuột.", "B. Bàn phím.", "C. Màn hình.", "D. Máy quét."], a: 2 },
+                { q: "Thành phần nào được coi là 'bộ não' của máy tính?", opts: ["A. Bộ nhớ (RAM).", "B. Bộ xử lý trung tâm (CPU).", "C. Ổ cứng (HDD/SSD).", "D. Bộ nguồn."], a: 1 },
+                { q: "Thiết bị nào giúp em đưa hình ảnh từ giấy vào máy tính?", opts: ["A. Máy in.", "B. Máy quét (Scanner).", "C. Loa.", "D. Màn hình."], a: 1 },
+                { q: "Đâu là ví dụ về phần mềm máy tính?", opts: ["A. Màn hình cảm ứng.", "B. Thân máy tính.", "C. Hệ điều hành Windows 10.", "D. Cổng kết nối USB."], a: 2 },
+                { q: "Chức năng chính của Hệ điều hành là gì?", opts: ["A. Soạn thảo văn bản.", "B. Vẽ tranh.", "C. Quản lý và điều khiển các thiết bị phần cứng, phần mềm.", "D. Chơi trò chơi."], a: 2 },
+                { q: "Khi tắt máy tính không đúng cách (rút điện đột ngột), điều gì có thể xảy ra?", opts: ["A. Máy tính sẽ bền hơn.", "B. Tiết kiệm điện năng tối đa.", "C. Hỏng hệ điều hành hoặc mất dữ liệu.", "D. Máy tính tự động cập nhật phần mềm."], a: 2 },
+                { q: "Một thiết bị số thông minh là thiết bị có khả năng:", opts: ["A. Chỉ dùng để trang trí.", "B. Tiếp nhận, xử lý, lưu trữ và trao đổi thông tin tự động.", "C. Chỉ hoạt động được khi có người cầm tay điều khiển liên tục.", "D. Không cần nguồn điện vẫn hoạt động được mãi mãi."], a: 1 }
+            ],
+            blanks: [
+                { q: "Thân máy tính chứa {blank} là nơi thực hiện các tính toán và điều khiển mọi hoạt động của máy tính.", a: ["bộ xử lý trung tâm", "cpu"] },
+                { q: "Để lưu trữ dữ liệu lâu dài ngay cả khi tắt máy, máy tính sử dụng thiết bị là {blank}.", a: ["ổ cứng", "hdd", "ssd"] },
+                { q: "{blank} là một ví dụ về thiết bị số thông minh cầm tay rất phổ biến hiện nay.", a: ["điện thoại thông minh", "điện thoại", "smartphone", "máy tính bảng"] }
+            ]
+        },
+        {
+            id: 1,
+            icon: "🌐",
+            title: "Thông Tin Và Internet",
+            intro: "Kiểm tra sự hiểu biết của em về mạng Internet, cách sử dụng trình duyệt, công cụ tìm kiếm và đánh giá thông tin trên mạng.",
+            mcqs: [
+                { q: "Internet là gì?", opts: ["A. Một phần mềm soạn thảo.", "B. Mạng kết nối các máy tính và thiết bị số trên toàn cầu.", "C. Một loại ổ cứng dung lượng lớn.", "D. Tên một trò chơi điện tử."], a: 1 },
+                { q: "Để tìm kiếm thông tin trên Internet, em thường sử dụng công cụ nào?", opts: ["A. Paint.", "B. Microsoft PowerPoint.", "C. Google Search.", "D. Notepad."], a: 2 },
+                { q: "'Từ khóa' khi tìm kiếm thông tin là:", opts: ["A. Một mật mã bí mật để mở máy tính.", "B. Cụm từ ngắn gọn thể hiện nội dung em muốn tìm.", "C. Tên của người sở hữu máy tính.", "D. Một lệnh trong lập trình Scratch."], a: 1 },
+                { q: "Thông tin trên Internet có đặc điểm gì?", opts: ["A. Luôn luôn đúng 100%.", "B. Rất phong phú nhưng cần được kiểm chứng độ tin cậy.", "C. Chỉ có văn bản, không có hình ảnh.", "D. Do máy tính tự sáng tạo ra hoàn toàn."], a: 1 },
+                { q: "Khi tìm được một trang web hay, em nên làm gì để xem lại sau này nhanh nhất?", opts: ["A. Ghi chép lại toàn bộ nội dung ra vở.", "B. Đánh dấu trang (Bookmark/Add to favorites).", "C. Để máy tính bật suốt ngày đêm.", "D. Chụp ảnh màn hình bằng điện thoại."], a: 1 },
+                { q: "Đâu là địa chỉ của một trang web?", opts: ["A. lop5a@gmail.com", "B. C:\\Documents\\BaiTap.docx", "C. www.nxbgd.vn", "D. 0912.345.678"], a: 2 },
+                { q: "Để tìm thông tin về 'Công viên Thủ Lệ', từ khóa nào là tốt nhất?", opts: ["A. Công viên.", "B. Thủ Lệ.", "C. Công viên Thủ Lệ.", "D. Đi chơi ở Hà Nội."], a: 2 }
+            ],
+            blanks: [
+                { q: "Trình duyệt web giúp em truy cập và xem nội dung các {blank} trên Internet.", a: ["trang web", "website"] },
+                { q: "Khi tìm kiếm thông tin, nếu từ khóa càng {blank} thì kết quả tìm kiếm càng chính xác.", a: ["chi tiết", "rõ ràng", "cụ thể"] },
+                { q: "Không phải mọi thông tin trên Internet đều chính xác, vì vậy em cần chọn lọc từ những nguồn {blank}.", a: ["uy tín", "đáng tin cậy", "chính thống"] }
+            ]
+        },
+        {
+            id: 2,
+            icon: "🛡️",
+            title: "Đạo Đức, Pháp Luật và Văn Hóa Số",
+            intro: "Chủ đề này giúp em ôn tập về bản quyền, cách ứng xử văn minh trên không gian mạng và bảo vệ sức khỏe, thông tin cá nhân.",
+            mcqs: [
+                { q: "Khi sử dụng thông tin, hình ảnh của người khác trên mạng, em cần:", opts: ["A. Cứ lấy tự nhiên không cần hỏi.", "B. Ghi rõ nguồn hoặc xin phép tác giả (nếu cần).", "C. Sửa tên tác giả thành tên mình.", "D. Xóa bỏ hình ảnh đó ngay lập tức."], a: 1 },
+                { q: "'Bản quyền' phần mềm là gì?", opts: ["A. Quyền được sao chép phần mềm miễn phí.", "B. Quyền sở hữu hợp pháp của tác giả đối với phần mềm đó.", "C. Một loại mật khẩu máy tính.", "D. Cách gọi khác của việc bẻ khóa phần mềm."], a: 1 },
+                { q: "Hành động nào sau đây là văn minh khi giao tiếp trên mạng?", opts: ["A. Sử dụng ngôn ngữ thô tục.", "B. Chia sẻ thông tin giả mạo để gây chú ý.", "C. Tôn trọng người khác, sử dụng ngôn ngữ lịch sự.", "D. Tiết lộ bí mật cá nhân của bạn bè."], a: 2 },
+                { q: "Em nên làm gì nếu nhận được tin nhắn đe dọa từ người lạ trên mạng?", opts: ["A. Nhắn tin chửi lại người đó.", "B. Làm theo mọi yêu cầu của họ.", "C. Chặn người đó và báo ngay cho cha mẹ hoặc thầy cô.", "D. Im lặng và không nói cho ai biết."], a: 2 },
+                { q: "Tại sao không nên ngồi máy tính quá lâu (trên 2 tiếng liên tục)?", opts: ["A. Tốn điện của gia đình.", "B. Máy tính sẽ bị hỏng nhanh.", "C. Ảnh hưởng xấu đến mắt, cột sống và sức khỏe.", "D. Bố mẹ sẽ mắng."], a: 2 },
+                { q: "Thông tin nào sau đây KHÔNG nên công khai trên mạng xã hội?", opts: ["A. Sở thích cá nhân (ví dụ: thích ăn kem).", "B. Địa chỉ nhà riêng và số điện thoại cá nhân.", "C. Ảnh chụp phong cảnh trường học.", "D. Tên các môn học em yêu thích."], a: 1 },
+                { q: "Việc cài đặt phần mềm không có bản quyền (phần mềm lậu) có thể dẫn đến:", opts: ["A. Máy tính chạy nhanh hơn.", "B. Máy tính bị nhiễm virus hoặc mã độc.", "C. Em sẽ được nhận thưởng từ nhà phát hành.", "D. Tăng độ bền cho phần cứng."], a: 1 }
+            ],
+            blanks: [
+                { q: "Sử dụng tài liệu của người khác mà không ghi nguồn là vi phạm quy định về {blank}.", a: ["bản quyền", "sở hữu trí tuệ"] },
+                { q: "Để bảo vệ mắt, em nên giữ khoảng cách từ mắt đến màn hình khoảng {blank} cm.", a: ["50", "50-60", "50 đến 60"] },
+                { q: "{blank} là các quy tắc ứng xử lịch sự, tử tế khi tham gia môi trường mạng.", a: ["netiquette", "văn hóa mạng", "quy tắc ứng xử", "chuẩn mực đạo đức"] }
+            ]
+        },
+        {
+            id: 3,
+            icon: "📊",
+            title: "Phần Mềm Trình Chiếu",
+            intro: "Ôn tập các kỹ năng làm việc với phần mềm PowerPoint, cách thêm trang, chèn hiệu ứng và nguyên tắc thiết kế cơ bản.",
+            mcqs: [
+                { q: "Phần mềm PowerPoint dùng để làm gì?", opts: ["A. Soạn thảo văn bản thuần túy.", "B. Tạo các bài thuyết trình sinh động.", "C. Lập trình trò chơi.", "D. Quản lý điểm học sinh."], a: 1 },
+                { q: "Để thêm một trang chiếu mới (Slide), em sử dụng tổ hợp phím nào?", opts: ["A. Ctrl + S.", "B. Ctrl + N.", "C. Ctrl + M.", "D. Ctrl + P."], a: 2 },
+                { q: "Hiệu ứng chuyển động cho các đối tượng (hình ảnh, chữ) trên Slide gọi là:", opts: ["A. Transitions.", "B. Animations.", "C. Design.", "D. Insert."], a: 1 },
+                { q: "Để trình chiếu từ trang đầu tiên, em nhấn phím nào trên bàn phím?", opts: ["A. F1.", "B. F5.", "C. F12.", "D. Enter."], a: 1 },
+                { q: "Để thay đổi màu nền hoặc mẫu thiết kế cho toàn bộ các Slide, em chọn thẻ nào?", opts: ["A. Home.", "B. Insert.", "C. Design.", "D. View."], a: 2 },
+                { q: "Khi thiết kế Slide, em nên tuân thủ nguyên tắc nào để người xem dễ quan sát?", opts: ["A. Cho càng nhiều chữ càng tốt.", "B. Dùng màu chữ trùng với màu nền.", "C. Chữ và nền có độ tương phản cao, cỡ chữ đủ lớn.", "D. Sử dụng 10 loại phông chữ khác nhau trên một trang."], a: 2 },
+                { q: "Để thoát khỏi chế độ trình chiếu, em nhấn phím:", opts: ["A. Tab.", "B. Esc.", "C. Alt.", "D. Shift."], a: 1 }
+            ],
+            blanks: [
+                { q: "Thẻ {blank} chứa các lệnh để chèn thêm hình ảnh, bảng biểu hoặc video vào trang chiếu.", a: ["insert", "chèn"] },
+                { q: "Hiệu ứng {blank} là hiệu ứng xuất hiện khi chuyển từ trang chiếu này sang trang chiếu khác.", a: ["transitions", "chuyển trang", "chuyển slide"] },
+                { q: "Một bài trình chiếu tốt nên kết hợp hài hòa giữa nội dung văn bản và các yếu tố {blank} như hình ảnh, sơ đồ.", a: ["trực quan", "đồ họa", "hình ảnh"] }
+            ]
+        },
+        {
+            id: 4,
+            icon: "🤖",
+            title: "Trí Tuệ Nhân Tạo (AI)",
+            intro: "Cùng tìm hiểu và ôn tập về AI là gì, các ứng dụng của AI trong đời sống và cách sử dụng AI an toàn.",
+            mcqs: [
+                { q: "Trí tuệ nhân tạo (AI) là gì?", opts: ["A. Là trí tuệ của con người được nhân lên nhiều lần.", "B. Là khả năng của máy móc (máy tính, robot) mô phỏng các hoạt động trí tuệ của con người.", "C. Là một loại siêu máy tính chỉ có trong phim viễn tưởng.", "D. Là một người bạn robot bằng sắt."], a: 1 },
+                { q: "Ứng dụng nào sau đây sử dụng công nghệ AI?", opts: ["A. Cái kéo cắt giấy.", "B. Robot hút bụi tự động tránh vật cản.", "C. Quyển sách giáo khoa.", "D. Bút chì màu."], a: 1 },
+                { q: "Công nghệ AI giúp điện thoại thông minh có thể:", opts: ["A. Nhận diện khuôn mặt để mở khóa.", "B. Tự nạp pin bằng không khí.", "C. Biến thành cục gạch khi hết pin.", "D. Chụp ảnh mà không cần ống kính."], a: 0 },
+                { q: "AI có thể giúp con người trong học tập như thế nào?", opts: ["A. Làm bài tập hộ từ đầu đến cuối mà học sinh không cần nghĩ.", "B. Giải đáp thắc mắc, gợi ý ý tưởng và cá nhân hóa lộ trình học tập.", "C. Thay thế hoàn toàn thầy cô giáo ở trường.", "D. Tự động viết điểm 10 vào sổ liên lạc."], a: 1 },
+                { q: "Robot được tích hợp AI khác với máy móc thông thường ở chỗ:", opts: ["A. Robot to hơn.", "B. Robot có thể học hỏi từ dữ liệu và đưa ra quyết định linh hoạt hơn.", "C. Robot luôn làm đúng 100% mọi lúc mọi nơi.", "D. Robot không bao giờ bị hỏng."], a: 1 },
+                { q: "Một ví dụ về AI trong việc tìm kiếm thông tin là:", opts: ["A. Lật từng trang từ điển giấy.", "B. Hỏi bạn bè bên cạnh.", "C. Trợ lý ảo (như Siri, Google Assistant) hiểu và trả lời câu hỏi bằng giọng nói.", "D. Đi bộ đến thư viện."], a: 2 },
+                { q: "Con người cần làm gì để sử dụng AI một cách hiệu quả và an toàn?", opts: ["A. Tin tưởng hoàn toàn vào mọi kết quả AI đưa ra.", "B. Có kiến thức cơ bản để điều khiển và kiểm soát hoạt động của AI.", "C. Không bao giờ chạm vào các thiết bị có AI.", "D. Để AI tự quyết định mọi việc trong cuộc sống."], a: 1 }
+            ],
+            blanks: [
+                { q: "AI là viết tắt của cụm từ tiếng Anh {blank} Intelligence.", a: ["artificial"] },
+                { q: "Các ứng dụng dịch thuật tự động hiện nay sử dụng AI để dịch văn bản giữa các {blank} khác nhau.", a: ["ngôn ngữ", "tiếng"] },
+                { q: "Máy tính cần được cung cấp một lượng lớn {blank} để có thể 'học' và trở nên thông minh hơn (AI).", a: ["dữ liệu", "thông tin"] }
+            ]
+        },
+        {
+            id: 5,
+            icon: "🐱",
+            title: "Lập Trình Scratch",
+            intro: "Khám phá lại thế giới lập trình Scratch với các khối lệnh, cấu trúc điều khiển và toạ độ sân khấu.",
+            mcqs: [
+                { q: "Trong Scratch, để nhân vật bắt đầu thực hiện các lệnh khi nhấn vào lá cờ xanh, em dùng khối lệnh nào?", opts: ["A. When I start.", "B. When Green Flag clicked.", "C. Start game.", "D. Go now."], a: 1 },
+                { q: "Khối lệnh 'Forever' (Mãi mãi) thuộc nhóm lệnh nào?", opts: ["A. Motion (Chuyển động).", "B. Looks (Hiển thị).", "C. Control (Điều khiển).", "D. Sensing (Cảm biến)."], a: 2 },
+                { q: "Để nhân vật di chuyển 10 bước, em dùng lệnh:", opts: ["A. Turn 10 degrees.", "B. Move 10 steps.", "C. Glide 10 seconds.", "D. Change x by 10."], a: 1 },
+                { q: "Cấu trúc 'Nếu ... thì ...' (If ... then ...) dùng để làm gì?", opts: ["A. Lặp lại một hành động.", "B. Thực hiện hành động dựa trên một điều kiện nhất định.", "C. Xóa nhân vật.", "D. Đổi màu sân khấu."], a: 1 },
+                { q: "Muốn nhân vật nói 'Xin chào' trong 2 giây, em chọn khối lệnh trong nhóm:", opts: ["A. Sound.", "B. Looks.", "C. Pen.", "D. Events."], a: 1 },
+                { q: "Để kiểm tra xem nhân vật có đang chạm vào con trỏ chuột hay không, em dùng khối lệnh trong nhóm:", opts: ["A. Operators.", "B. Sensing.", "C. Motion.", "D. Variables."], a: 1 },
+                { q: "Trong Scratch, sân khấu (Stage) có tọa độ trung tâm là:", opts: ["A. x: 100, y: 100.", "B. x: 0, y: 0.", "C. x: 240, y: 180.", "D. x: -240, y: -180."], a: 1 }
+            ],
+            blanks: [
+                { q: "Cấu trúc {blank} giúp lặp lại một nhóm lệnh nhiều lần mà không cần viết lại.", a: ["lặp", "vòng lặp", "điều khiển lặp"] },
+                { q: "Để nhân vật quay lại khi chạm vào cạnh sân khấu, em dùng lệnh {blank}.", a: ["if on edge, bounce", "if on edge bounce", "bật lại nếu chạm cạnh"] },
+                { q: "Trong cấu trúc điều khiển 'If... then... else', nếu điều kiện sai thì các lệnh ở phần {blank} sẽ được thực hiện.", a: ["else", "nếu không thì", "không thì"] }
+            ]
+        }
+    ];
+
+    let scores = new Array(appData.length).fill(null);
+    let currentTopicIndex = null;
+    let myChart = null;
+
+    const elTopicList = document.getElementById('topic-list');
+    const elNavHome = document.getElementById('nav-home');
+    const elViewDashboard = document.getElementById('view-dashboard');
+    const elViewQuiz = document.getElementById('view-quiz');
+    const elQuizQuestions = document.getElementById('quiz-questions');
+    const elQuizTitle = document.getElementById('quiz-title');
+    const elQuizIcon = document.getElementById('quiz-icon');
+    const elQuizIntro = document.getElementById('quiz-intro');
+    const elBtnSubmit = document.getElementById('btn-submit');
+    const elQuizResultDisplay = document.getElementById('quiz-result-display');
+    const elStatCompleted = document.getElementById('stat-completed');
+    const elStatAvg = document.getElementById('stat-avg');
+    const elStatRank = document.getElementById('stat-rank');
+
+    function init() {
+        renderSidebar();
+        elNavHome.addEventListener('click', showDashboard);
+        elBtnSubmit.addEventListener('click', evaluateQuiz);
+        initChart();
+        updateStats();
+    }
+
+    function renderSidebar() {
+        elTopicList.innerHTML = '';
+        appData.forEach((topic, index) => {
+            const btn = document.createElement('button');
+            btn.className = `w-full text-left p-3 rounded-lg border border-transparent transition-all hover:bg-white hover:shadow-sm mb-1 flex items-center justify-between text-slate-600 ${scores[index] !== null ? 'border-l-4 border-l-emerald-500' : ''}`;
+            btn.id = `nav-topic-${index}`;
+            
+            let statusIcon = '';
+            if (scores[index] !== null) {
+                statusIcon = `<span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold">${scores[index]}/10</span>`;
+            }
+
+            btn.innerHTML = `<div class="flex items-center"><span class="mr-2">${topic.icon}</span> <span class="truncate pr-2">${topic.title}</span></div> ${statusIcon}`;
+            btn.addEventListener('click', () => showQuiz(index));
+            elTopicList.appendChild(btn);
+        });
+    }
+
+    function setActiveNav(index) {
+        elNavHome.classList.remove('bg-blue-100', 'text-blue-700');
+        elNavHome.classList.add('text-slate-600');
+        
+        appData.forEach((_, i) => {
+            const btn = document.getElementById(`nav-topic-${i}`);
+            btn.classList.remove('bg-blue-50', 'text-blue-700', 'shadow-sm', 'font-semibold');
+            btn.classList.add('text-slate-600');
+            if (i === index) {
+                btn.classList.add('bg-blue-50', 'text-blue-700', 'shadow-sm', 'font-semibold');
+                btn.classList.remove('text-slate-600');
+            }
+        });
+
+        if (index === null) {
+            elNavHome.classList.add('bg-blue-100', 'text-blue-700', 'font-semibold');
+            elNavHome.classList.remove('text-slate-600');
+        }
+    }
+
+    function showDashboard() {
+        currentTopicIndex = null;
+        setActiveNav(null);
+        elViewQuiz.classList.add('hidden');
+        elViewDashboard.classList.remove('hidden');
+        updateStats();
+        updateChart();
+    }
+
+    function showQuiz(index) {
+        currentTopicIndex = index;
+        setActiveNav(index);
+        elViewDashboard.classList.add('hidden');
+        elViewQuiz.classList.remove('hidden');
+        
+        const topic = appData[index];
+        elQuizIcon.innerText = topic.icon;
+        elQuizTitle.innerText = topic.title;
+        elQuizIntro.innerText = topic.intro;
+        
+        elQuizResultDisplay.innerHTML = '';
+        elBtnSubmit.classList.remove('hidden');
+        
+        buildQuizDOM(topic);
+    }
+
+    function buildQuizDOM(topic) {
+        elQuizQuestions.innerHTML = '';
+        
+        const mcqSection = document.createElement('div');
+        mcqSection.innerHTML = `<h3 class="text-lg font-bold text-blue-700 border-b-2 border-blue-100 pb-2 mb-4">I. Trắc Nghiệm</h3>`;
+        
+        topic.mcqs.forEach((mcq, qIndex) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 transition-colors question-block';
+            qDiv.id = `q-mcq-${qIndex}`;
+            
+            let optsHtml = '';
+            mcq.opts.forEach((opt, oIndex) => {
+                optsHtml += `
+                    <label class="flex items-start cursor-pointer p-2 rounded-lg hover:bg-slate-100 transition-colors">
+                        <input type="radio" name="mcq-${qIndex}" value="${oIndex}" class="mt-1 mr-3 w-4 h-4 text-blue-600">
+                        <span class="text-slate-700">${opt}</span>
+                    </label>
+                `;
+            });
+
+            qDiv.innerHTML = `
+                <p class="font-semibold text-slate-800 mb-3">Câu ${qIndex + 1}. ${mcq.q}</p>
+                <div class="space-y-1">${optsHtml}</div>
+                <div class="feedback text-sm mt-2 font-bold hidden"></div>
+            `;
+            mcqSection.appendChild(qDiv);
+        });
+        elQuizQuestions.appendChild(mcqSection);
+
+        const blankSection = document.createElement('div');
+        blankSection.innerHTML = `<h3 class="text-lg font-bold text-blue-700 border-b-2 border-blue-100 pb-2 mb-4 mt-8">II. Điền Từ</h3>`;
+        
+        topic.blanks.forEach((blank, bIndex) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 transition-colors question-block';
+            qDiv.id = `q-blank-${bIndex}`;
+            
+            const parts = blank.q.split('{blank}');
+            
+            qDiv.innerHTML = `
+                <p class="font-semibold text-slate-800 mb-2">Câu ${bIndex + 1}.</p>
+                <div class="leading-loose text-slate-700">
+                    ${parts[0]} <input type="text" id="blank-${bIndex}" class="border-b-2 border-slate-400 bg-transparent outline-none px-2 py-1 text-blue-600 font-semibold focus:border-blue-600 transition-colors w-40 text-center" placeholder="..."> ${parts[1]}
+                </div>
+                <div class="feedback text-sm mt-2 font-bold hidden"></div>
+            `;
+            blankSection.appendChild(qDiv);
+        });
+        elQuizQuestions.appendChild(blankSection);
+    }
+
+    function evaluateQuiz() {
+        const topic = appData[currentTopicIndex];
+        let correctCount = 0;
+        const totalQs = topic.mcqs.length + topic.blanks.length;
+
+        topic.mcqs.forEach((mcq, qIndex) => {
+            const qDiv = document.getElementById(`q-mcq-${qIndex}`);
+            const selected = document.querySelector(`input[name="mcq-${qIndex}"]:checked`);
+            const feedback = qDiv.querySelector('.feedback');
+            
+            qDiv.classList.remove('correct-bg', 'wrong-bg');
+            feedback.classList.remove('hidden', 'text-emerald-600', 'text-red-600');
+
+            if (selected && parseInt(selected.value) === mcq.a) {
+                correctCount++;
+                qDiv.classList.add('correct-bg');
+                feedback.innerText = '✓ Chính xác!';
+                feedback.classList.add('text-emerald-600');
+            } else {
+                qDiv.classList.add('wrong-bg');
+                feedback.innerText = `✗ Sai rồi. Đáp án đúng là: ${mcq.opts[mcq.a]}`;
+                feedback.classList.add('text-red-600');
+            }
+            const inputs = qDiv.querySelectorAll('input');
+            inputs.forEach(inp => inp.disabled = true);
+        });
+
+        topic.blanks.forEach((blank, bIndex) => {
+            const qDiv = document.getElementById(`q-blank-${bIndex}`);
+            const inputEl = document.getElementById(`blank-${bIndex}`);
+            const val = inputEl.value.trim().toLowerCase();
+            const feedback = qDiv.querySelector('.feedback');
+
+            qDiv.classList.remove('correct-bg', 'wrong-bg');
+            feedback.classList.remove('hidden', 'text-emerald-600', 'text-red-600');
+
+            let isCorrect = false;
+            for(let ans of blank.a) {
+                if(val === ans.toLowerCase()) { isCorrect = true; break; }
+            }
+
+            if (isCorrect) {
+                correctCount++;
+                qDiv.classList.add('correct-bg');
+                feedback.innerText = '✓ Chính xác!';
+                feedback.classList.add('text-emerald-600');
+            } else {
+                qDiv.classList.add('wrong-bg');
+                feedback.innerText = `✗ Chưa chính xác. Gợi ý: ${blank.a[0]}`;
+                feedback.classList.add('text-red-600');
+            }
+            inputEl.disabled = true;
+        });
+
+        const rawScore = (correctCount / totalQs) * 10;
+        const finalScore = Math.round(rawScore * 10) / 10;
+        
+        scores[currentTopicIndex] = finalScore;
+        
+        elQuizResultDisplay.innerHTML = `
+            <div class="text-slate-600">Điểm của em:</div>
+            <div class="text-3xl font-black ${finalScore >= 5 ? 'text-emerald-600' : 'text-red-600'}">${finalScore} / 10</div>
+        `;
+        elBtnSubmit.classList.add('hidden');
+        
+        renderSidebar(); 
+        updateStats();
+        updateChart();
+    }
+
+    function updateStats() {
+        const completed = scores.filter(s => s !== null);
+        elStatCompleted.innerText = completed.length;
+        
+        if (completed.length > 0) {
+            const sum = completed.reduce((a, b) => a + b, 0);
+            const avg = (sum / completed.length).toFixed(1);
+            elStatAvg.innerText = `${avg}/10`;
+            
+            if (avg >= 9) elStatRank.innerText = "Xuất sắc";
+            else if (avg >= 7) elStatRank.innerText = "Khá Tốt";
+            else if (avg >= 5) elStatRank.innerText = "Đạt";
+            else elStatRank.innerText = "Cần cố gắng";
+        }
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: appData.map(d => d.title),
+                datasets: [{
+                    label: 'Điểm số',
+                    data: scores.map(s => s === null ? 0 : s),
+                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 2,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10,
+                        title: { display: true, text: 'Điểm' }
+                    },
+                    x: {
+                        ticks: {
+                            callback: function(value) {
+                                let label = this.getLabelForValue(value);
+                                return label.length > 16 ? label.substr(0, 16) + '...' : label;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                return appData[context[0].dataIndex].title;
+                            }
+                        }
+                    },
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    function updateChart() {
+        if(myChart) {
+            myChart.data.datasets[0].data = scores.map(s => s === null ? 0 : s);
+            
+            myChart.data.datasets[0].backgroundColor = scores.map(s => {
+                if(s === null) return 'rgba(203, 213, 225, 0.3)'; 
+                if(s >= 8) return 'rgba(16, 185, 129, 0.6)'; 
+                if(s >= 5) return 'rgba(245, 158, 11, 0.6)'; 
+                return 'rgba(239, 68, 68, 0.6)'; 
+            });
+            myChart.data.datasets[0].borderColor = scores.map(s => {
+                if(s === null) return 'rgb(203, 213, 225)';
+                if(s >= 8) return 'rgb(16, 185, 129)';
+                if(s >= 5) return 'rgb(245, 158, 11)';
+                return 'rgb(239, 68, 68)';
+            });
+
+            myChart.update();
+        }
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>

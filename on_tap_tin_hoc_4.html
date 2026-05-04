@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Ôn Tập Tin Học Lớp 4 - Chân Trời Sáng Tạo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #fafaf9;
+            color: #292524;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 35vh;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 40vh;
+                max-height: 400px;
+            }
+        }
+        .topic-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .topic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .hide {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- Chosen Palette: Warm Neutrals (Stone/Amber) with Ocean Blue accents -->
+
+<!-- Application Structure Plan: The SPA is structured as an interactive educational dashboard. It begins with an "Overview" section presenting quantitative data about the curriculum (Chart.js visualizations showing question distribution by difficulty and module) to give students and teachers a high-level understanding of the scope. The core interaction is the "Topic Explorer" (grid layout) leading into a "Study Mode" (dynamic flashcard/quiz interface). This structure was chosen because scrolling through 150 text-based questions is fatiguing; a segmented, interactive quiz format enhances engagement, allows self-paced learning, and provides immediate feedback, directly supporting the goal of effective revision. -->
+
+<!-- Visualization & Content Choices: 
+1. Curriculum Scope -> Goal: Inform -> Viz: Doughnut Chart -> Interaction: Hover for exact counts -> Justification: Shows the balance of easy/medium/hard questions (105/30/15) instantly. -> Library: Chart.js (Canvas).
+2. Topic Distribution -> Goal: Compare -> Viz: Bar Chart -> Interaction: Hover details -> Justification: Visualizes the 15 topics, proving equal weight (10 questions each) across the curriculum. -> Library: Chart.js (Canvas).
+3. Question Review -> Goal: Organize & Inform -> Viz: Interactive Quiz Cards -> Interaction: Click to select answer, reveal correct answer and explanation -> Justification: Active recall is the best study method; transforming static text into a responsive quiz maximizes learning. -> Library: Vanilla JS + Tailwind.
+-->
+
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <header class="bg-stone-900 text-stone-50 py-6 px-4 shadow-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">🖥️ Ôn Tập Tin Học 4</h1>
+                <p class="text-stone-400 text-sm mt-1">Bộ sách: Chân trời sáng tạo | 15 Chủ đề</p>
+            </div>
+            <nav class="flex gap-4">
+                <button id="btn-overview" class="px-4 py-2 bg-stone-800 hover:bg-stone-700 rounded-lg text-sm font-medium transition-colors">Tổng Quan</button>
+                <button id="btn-practice" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-colors">Luyện Tập</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow w-full max-w-6xl mx-auto p-4 md:p-6">
+        
+        <section id="view-overview" class="space-y-8 animate-fade-in">
+            <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 md:p-8">
+                <h2 class="text-xl font-bold text-stone-800 mb-2">📊 Thống Kê Học Liệu</h2>
+                <p class="text-stone-600 mb-8">Phần này cung cấp cái nhìn tổng quan về cấu trúc 150 câu hỏi ôn tập của chương trình Tin học lớp 4, được phân bổ theo độ khó và từng chủ đề cụ thể.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="flex flex-col items-center">
+                        <h3 class="text-lg font-semibold text-stone-700 mb-4">Phân Bố Độ Khó (150 Câu)</h3>
+                        <div class="chart-container">
+                            <canvas id="difficultyChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <h3 class="text-lg font-semibold text-stone-700 mb-4">Cấu Trúc 15 Bài Học</h3>
+                        <div class="chart-container">
+                            <canvas id="topicChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 md:p-8">
+                <h2 class="text-xl font-bold text-stone-800 mb-4">🚀 Hướng Dẫn Ôn Tập</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="p-5 bg-stone-50 rounded-xl border border-stone-100">
+                        <div class="text-3xl mb-3">1️⃣</div>
+                        <h4 class="font-bold mb-2">Chọn Chủ Đề</h4>
+                        <p class="text-sm text-stone-600">Chuyển sang tab Luyện Tập và chọn một trong 15 bài học bạn muốn ôn lại kiến thức.</p>
+                    </div>
+                    <div class="p-5 bg-stone-50 rounded-xl border border-stone-100">
+                        <div class="text-3xl mb-3">2️⃣</div>
+                        <h4 class="font-bold mb-2">Trả Lời Câu Hỏi</h4>
+                        <p class="text-sm text-stone-600">Đọc kỹ câu hỏi, suy nghĩ và chọn đáp án bạn cho là đúng nhất.</p>
+                    </div>
+                    <div class="p-5 bg-stone-50 rounded-xl border border-stone-100">
+                        <div class="text-3xl mb-3">3️⃣</div>
+                        <h4 class="font-bold mb-2">Kiểm Tra Kết Quả</h4>
+                        <p class="text-sm text-stone-600">Hệ thống sẽ báo đúng/sai và cung cấp lời giải thích để bạn ghi nhớ lâu hơn.</p>
+                    </div>
+                </div>
+                <div class="mt-8 text-center">
+                    <button id="btn-start-practice" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Bắt Đầu Luyện Tập Ngay</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-topics" class="hide space-y-6 animate-fade-in">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-stone-800">Danh Sách Chủ Đề</h2>
+                <p class="text-stone-600 mt-1">Chọn một bài học để bắt đầu trả lời các câu hỏi trắc nghiệm và điền từ.</p>
+            </div>
+            <div id="topics-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+        </section>
+
+        <section id="view-quiz" class="hide space-y-6 animate-fade-in max-w-3xl mx-auto">
+            <button id="btn-back-topics" class="flex items-center text-stone-500 hover:text-stone-800 font-medium transition-colors mb-4">
+                <span class="text-xl mr-2">⬅️</span> Quay lại danh sách
+            </button>
+            
+            <div class="bg-white rounded-2xl shadow-md border border-stone-200 overflow-hidden">
+                <div class="bg-stone-100 border-b border-stone-200 p-4 flex justify-between items-center">
+                    <h2 id="quiz-topic-title" class="font-bold text-stone-800 text-lg">Tên Bài Học</h2>
+                    <span id="quiz-progress" class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">Câu 1/10</span>
+                </div>
+                
+                <div class="p-6 md:p-8">
+                    <div class="mb-6">
+                        <span id="quiz-difficulty" class="inline-block px-2 py-1 bg-stone-200 text-stone-700 text-xs font-bold rounded mb-3">Dễ</span>
+                        <h3 id="quiz-question-text" class="text-xl font-medium text-stone-900 leading-relaxed">Nội dung câu hỏi?</h3>
+                    </div>
+                    
+                    <div id="quiz-options" class="space-y-3">
+                    </div>
+
+                    <div id="quiz-feedback" class="hide mt-6 p-4 rounded-xl border">
+                        <p id="quiz-feedback-title" class="font-bold text-lg mb-1">Kết quả</p>
+                        <p id="quiz-feedback-text" class="text-stone-700">Giải thích chi tiết sẽ hiện ở đây.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-stone-50 border-t border-stone-200 p-4 flex justify-between items-center">
+                    <button id="btn-prev-question" class="px-5 py-2 rounded-lg font-medium text-stone-600 bg-stone-200 hover:bg-stone-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Câu Trước</button>
+                    <button id="btn-next-question" class="px-5 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">Câu Tiếp ➡️</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-stone-900 text-stone-400 py-6 text-center text-sm mt-auto">
+        <p>Hệ thống ôn tập mô phỏng dựa trên tài liệu Tin học 4 - Chân trời sáng tạo</p>
+    </footer>
+
+    <script>
+        const appData = {
+            topics: [
+                {
+                    id: 1,
+                    title: "Bộ 1: Phần cứng và phần mềm",
+                    icon: "🖥️",
+                    questions: [
+                        {
+						"diff": "Dễ",
+						"text": "Thiết bị nào là phần cứng của máy tính?",
+						"type": "mcq",
+						"options": ["Phần mềm Paint", "Bàn phím", "Hệ điều hành Windows", "Trò chơi điện tử"],
+						"correct": 1,
+						"explanation": "Bàn phím là thiết bị vật lý có thể chạm vào được, do đó nó là phần cứng."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Biểu tượng của phần mềm soạn thảo văn bản Word có đặc điểm gì?",
+						"type": "mcq",
+						"options": ["Hình chữ W màu xanh dương", "Hình bảng màu", "Hình chữ P màu cam", "Hình cửa sổ"],
+						"correct": 0,
+						"explanation": "Biểu tượng của Word là chữ W màu xanh dương đặc trưng."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Thiết bị nào dùng để đưa âm thanh ra ngoài?",
+						"type": "mcq",
+						"options": ["Micro", "Chuột", "Loa", "Màn hình"],
+						"correct": 2,
+						"explanation": "Loa là thiết bị đầu ra chuyên dụng để phát âm thanh."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để vẽ tranh trên máy tính, em dùng:",
+						"type": "mcq",
+						"options": ["Máy in", "Loa", "Phần mềm Paint", "Bàn phím"],
+						"correct": 2,
+						"explanation": "Paint là phần mềm dùng để vẽ tranh trên máy tính."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Thiết bị nào là thiết bị vào?",
+						"type": "mcq",
+						"options": ["Màn hình", "Máy in", "Chuột", "Loa"],
+						"correct": 2,
+						"explanation": "Chuột là thiết bị nhập dữ liệu vào máy tính."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Phần mềm quan trọng nhất điều khiển máy tính là:",
+						"type": "mcq",
+						"options": ["Phần mềm Word", "Hệ điều hành", "Phần mềm luyện gõ", "Trò chơi"],
+						"correct": 1,
+						"explanation": "Hệ điều hành quản lý toàn bộ phần cứng và phần mềm trên máy tính."
+					  },
+					  {
+						"diff": "Dễ - Điền từ",
+						"text": "Phần cứng cần có __________ để hoạt động.",
+						"type": "fill",
+						"answer": "phần mềm",
+						"options": ["phần mềm", "chuột", "bàn phím", "màn hình"],
+						"correct": 0,
+						"explanation": "Phần mềm cung cấp các chỉ dẫn để phần cứng thực thi."
+					  },
+					  {
+						"diff": "TB",
+						"text": "Nếu máy tính có phần cứng nhưng thiếu hệ điều hành thì:",
+						"type": "mcq",
+						"options": ["Vẫn dùng được bình thường", "Không thể hoạt động được", "Chỉ nghe nhạc được", "Tự động sửa lỗi"],
+						"correct": 1,
+						"explanation": "Không có hệ điều hành, máy tính không thể hoạt động đúng cách."
+					  },
+					  {
+						"diff": "TB - Điền từ",
+						"text": "Màn hình cảm ứng vừa là thiết bị vào vừa là thiết bị __________.",
+						"type": "fill",
+						"answer": "ra",
+						"options": ["ra", "vào", "lưu trữ", "xử lý"],
+						"correct": 0,
+						"explanation": "Màn hình cảm ứng vừa nhận thao tác (vào) vừa hiển thị (ra)."
+					  },
+					  {
+						"diff": "Nâng cao",
+						"text": "Ví dụ minh họa sự phối hợp phần cứng và phần mềm:",
+						"type": "mcq",
+						"options": ["Lau bụi màn hình", "Tắt máy đi ngủ", "Gõ phím chữ A và chữ A hiện trên Word", "Cắm dây nguồn vào ổ điện"],
+						"correct": 2,
+						"explanation": "Gõ phím là tác động phần cứng, hiển thị chữ là do phần mềm xử lý."
+					  } ]
+                },
+                {
+                    id: 2,
+                    title: "Bộ 2: Gõ bàn phím đúng cách",
+                    icon: "⌨️",
+                    questions: [
+					
+						{
+							"diff": "Dễ",
+							"text": "Hai ngón cái luôn đặt ở phím:",
+							"type": "mcq",
+							"options": ["Enter", "Shift", "Cách (Space bar)", "Ctrl"],
+							"correct": 2,
+							"explanation": "Hai ngón cái dùng để nhấn phím cách (Space bar)."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Hai phím có gờ nổi ở hàng cơ sở là:",
+							"type": "mcq",
+							"options": ["G và H", "F và J", "A và L", "S và K"],
+							"correct": 1,
+							"explanation": "Phím F và J có gờ nổi để định vị vị trí ngón tay."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Hàng phím chứa các phím A, S, D, F... là:",
+							"type": "mcq",
+							"options": ["Hàng phím trên", "Hàng phím dưới", "Hàng phím cơ sở", "Hàng phím số"],
+							"correct": 2,
+							"explanation": "Các phím A, S, D, F thuộc hàng cơ sở."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Tư thế ngồi đúng khi gõ máy tính:",
+							"type": "mcq",
+							"options": ["Ngồi sát màn hình", "Lưng thẳng, mắt cách màn hình 50-80cm", "Nằm ngả ra ghế", "Cúi sát bàn phím"],
+							"correct": 1,
+							"explanation": "Ngồi đúng tư thế giúp bảo vệ mắt và cột sống."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Phím xóa ký tự bên trái con trỏ là:",
+							"type": "mcq",
+							"options": ["Delete", "Enter", "Backspace", "Space"],
+							"correct": 2,
+							"explanation": "Backspace dùng để xóa ký tự phía bên trái con trỏ."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Ngón áp út tay trái phụ trách phím nào trên hàng cơ sở?",
+							"type": "mcq",
+							"options": ["Phím A", "Phím S", "Phím D", "Phím F"],
+							"correct": 1,
+							"explanation": "Ngón áp út tay trái đặt tại phím S."
+						  },
+						  {
+							"diff": "Dễ - Điền từ",
+							"text": "Gõ bàn phím bằng __________ ngón tay là cách gõ chuyên nghiệp.",
+							"type": "fill",
+							"options": ["2", "5", "10", "8"],
+							"correct": 2,
+							"answer": "10",
+							"explanation": "Sử dụng 10 ngón tay giúp tăng tốc độ gõ và giảm mệt mỏi."
+						  },
+						  {
+							"diff": "TB",
+							"text": "Lợi ích của gõ 10 ngón đúng cách:",
+							"type": "mcq",
+							"options": ["Gõ nhanh và không cần nhìn bàn phím", "Làm bàn phím đẹp hơn", "Tiết kiệm điện", "Giảm dung lượng tệp"],
+							"correct": 0,
+							"explanation": "Gõ 10 ngón giúp tăng tốc độ và độ chính xác."
+						  },
+						  {
+							"diff": "TB - Điền từ",
+							"text": "Phím J dành cho ngón trỏ của bàn tay __________.",
+							"type": "fill",
+							"options": ["trái", "phải", "cả hai", "không xác định"],
+							"correct": 1,
+							"answer": "phải",
+							"explanation": "Ngón trỏ tay phải đặt ở phím J."
+						  },
+						  {
+							"diff": "Nâng cao",
+							"text": "Để gõ chữ \"H\" trên hàng cơ sở, em dùng ngón nào?",
+							"type": "mcq",
+							"options": ["Trỏ tay trái", "Trỏ tay phải", "Giữa tay phải", "Út tay trái"],
+							"correct": 1,
+							"explanation": "Phím H do ngón trỏ tay phải đảm nhiệm."
+						  }
+
+                    //    { diff: "Dễ", text: "Hai ngón cái luôn đặt ở phím:", type: "mcq", options: ["Enter", "Shift", "Cách (Space bar)", "Ctrl"], correct: 2, explanation: "Phím Cách là phím dài nhất, được thiết kế chuyên biệt cho hai ngón cái." },
+                     //   { diff: "Dễ", text: "Hai phím có gờ nổi ở hàng cơ sở là:", type: "mcq", options: ["G và H", "F và J", "A và L", "S và K"], correct: 1, explanation: "Gờ nổi giúp người dùng định vị ngón trỏ mà không cần nhìn bàn phím." },
+                     //   { diff: "Dễ", text: "Tư thế ngồi đúng khi gõ máy tính:", type: "mcq", options: ["Ngồi sát màn hình.", "Lưng thẳng, mắt cách màn hình 50-80cm.", "Nằm ngả ra ghế.", "Cúi sát bàn phím."], correct: 1, explanation: "Tư thế này giúp bảo vệ cột sống và thị lực." },
+                      //  { diff: "Dễ - Điền từ", text: "Gõ bàn phím bằng __________ ngón tay là cách gõ chuyên nghiệp.", type: "fill", options: ["2", "5", "10", "8"], correct: 2, explanation: "Sử dụng 10 ngón tay giúp tăng tốc độ gõ và giảm mệt mỏi." },
+                      //  { diff: "TB", text: "Lợi ích của gõ 10 ngón đúng cách:", type: "mcq", options: ["Gõ nhanh và không cần nhìn bàn phím.", "Làm bàn phím đẹp hơn.", "Tiết kiệm điện.", "Giảm dung lượng tệp."], correct: 0, explanation: "Gõ 10 ngón giúp tạo phản xạ cơ bắp, không cần nhìn phím." }
+                    ]
+                },
+                {
+                    id: 3,
+                    title: "Bộ 3: Thông tin trên trang web",
+                    icon: "🌐",
+                    questions: [
+					  {
+						"diff": "Dễ",
+						"text": "Địa chỉ trang web thường bắt đầu bằng:",
+						"type": "mcq",
+						"options": ["www.", "http:// hoặc https://", "Email:", "C:"],
+						"correct": 1,
+						"explanation": "Địa chỉ web thường bắt đầu bằng http:// hoặc https://."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Phần mềm để xem trang web gọi là:",
+						"type": "mcq",
+						"options": ["Soạn thảo văn bản", "Trình duyệt web", "Phần mềm vẽ", "Hệ điều hành"],
+						"correct": 1,
+						"explanation": "Trình duyệt web dùng để truy cập và xem các trang web."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Nội dung trên trang web gồm:",
+						"type": "mcq",
+						"options": ["Chữ và số", "Văn bản, hình ảnh, âm thanh, video", "Chỉ có hình ảnh", "Chỉ có video"],
+						"correct": 1,
+						"explanation": "Trang web có thể chứa nhiều dạng nội dung đa phương tiện."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Biểu tượng bàn tay có ngón trỏ chỉ lên xuất hiện khi:",
+						"type": "mcq",
+						"options": ["Rê chuột vào siêu liên kết (link)", "Tắt máy tính", "Gõ văn bản", "Vẽ tranh"],
+						"correct": 0,
+						"explanation": "Biểu tượng này cho biết có thể nhấp vào liên kết."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Các trang web kết nối với nhau nhờ:",
+						"type": "mcq",
+						"options": ["Dây điện", "Siêu liên kết (Hyperlink)", "Sóng wifi", "Bàn phím"],
+						"correct": 1,
+						"explanation": "Siêu liên kết giúp chuyển từ trang này sang trang khác."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Nút lệnh quay lại trang trước đó có hình:",
+						"type": "mcq",
+						"options": ["Ngôi nhà", "Mũi tên sang trái", "Chữ X", "Vòng tròn mũi tên"],
+						"correct": 1,
+						"explanation": "Mũi tên sang trái là biểu tượng quay lại trang trước."
+					  },
+					  {
+						"diff": "Dễ - Điền từ",
+						"text": "Mỗi trang web đều có một __________ duy nhất.",
+						"type": "fill",
+						"options": ["địa chỉ", "tên", "hình ảnh", "màu sắc"],
+						"correct": 0,
+						"answer": "địa chỉ",
+						"explanation": "Mỗi trang web có một địa chỉ riêng để truy cập."
+					  },
+					  {
+						"diff": "TB",
+						"text": "Siêu văn bản khác văn bản thường ở chỗ:",
+						"type": "mcq",
+						"options": ["Có kích thước lớn hơn", "Chứa các siêu liên kết", "Chỉ xem được ban đêm", "Không thể chỉnh sửa"],
+						"correct": 1,
+						"explanation": "Siêu văn bản có chứa các liên kết giúp điều hướng."
+					  },
+					  {
+						"diff": "TB - Điền từ",
+						"text": "Google Chrome là một ví dụ về __________ web.",
+						"type": "fill",
+						"options": ["trình duyệt", "trang", "phần mềm", "hệ điều hành"],
+						"correct": 0,
+						"answer": "trình duyệt",
+						"explanation": "Google Chrome là trình duyệt web dùng để truy cập Internet."
+					  },
+					  {
+						"diff": "Nâng cao",
+						"text": "Khi nhấn vào siêu liên kết, trình duyệt sẽ làm gì?",
+						"type": "mcq",
+						"options": ["Tắt máy tính", "Mở ra một trang web hoặc vị trí mới", "Xóa hết dữ liệu", "Phát âm thanh cảnh báo"],
+						"correct": 1,
+						"explanation": "Siêu liên kết giúp mở trang web hoặc nội dung mới."
+					  }
+					
+					
+					
+					
+					
+                     //   { diff: "Dễ", text: "Địa chỉ trang web thường bắt đầu bằng:", type: "mcq", options: ["www.", "http:// hoặc https://", "Email:", "C:\\"], correct: 1, explanation: "Đây là các giao thức truyền tải siêu văn bản tiêu chuẩn trên Internet." },
+                      //  { diff: "Dễ", text: "Phần mềm để xem trang web gọi là:", type: "mcq", options: ["Soạn thảo văn bản", "Trình duyệt web", "Phần mềm vẽ", "Hệ điều hành"], correct: 1, explanation: "Trình duyệt web (như Chrome, Edge) dùng để truy cập Internet." },
+                      //  { diff: "Dễ", text: "Biểu tượng bàn tay có ngón trỏ chỉ lên xuất hiện khi:", type: "mcq", options: ["Rê chuột vào siêu liên kết (link).", "Tắt máy tính.", "Gõ văn bản.", "Vẽ tranh."], correct: 0, explanation: "Biểu tượng này báo hiệu đối tượng có thể nhấp vào để chuyển trang." },
+                     //   { diff: "TB", text: "Siêu văn bản khác văn bản thường ở chỗ:", type: "mcq", options: ["Có kích thước lớn hơn.", "Chứa các siêu liên kết.", "Chỉ xem được ban đêm.", "Không thể chỉnh sửa."], correct: 1, explanation: "Siêu liên kết (hyperlink) là tính năng cốt lõi tạo nên mạng lưới web." },
+                     //   { diff: "Nâng cao", text: "Khi nhấn vào siêu liên kết, trình duyệt sẽ làm gì?", type: "mcq", options: ["Tắt máy tính.", "Mở ra một trang web hoặc vị trí mới.", "Xóa hết dữ liệu.", "Phát âm thanh cảnh báo."], correct: 1, explanation: "Siêu liên kết dùng để điều hướng người dùng tới thông tin liên quan." }
+                    ]
+                },
+                {
+                    id: 4,
+                    title: "Bộ 4: Tìm kiếm trên Internet",
+                    icon: "🔍",
+                    questions: [
+					  {
+						"diff": "Dễ",
+						"text": "Đâu là máy tìm kiếm phổ biến?",
+						"type": "mcq",
+						"options": ["Paint", "Google", "Word", "PowerPoint"],
+						"correct": 1,
+						"explanation": "Google là một trong những máy tìm kiếm phổ biến nhất hiện nay."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để tìm kiếm, em cần nhập gì vào ô tìm kiếm?",
+						"type": "mcq",
+						"options": ["Mật khẩu", "Từ khóa", "Họ tên", "Địa chỉ nhà"],
+						"correct": 1,
+						"explanation": "Từ khóa là nội dung chính giúp máy tìm kiếm hiểu yêu cầu."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Sau khi gõ từ khóa, em nhấn phím nào?",
+						"type": "mcq",
+						"options": ["Esc", "Shift", "Enter", "Alt"],
+						"correct": 2,
+						"explanation": "Phím Enter dùng để thực hiện lệnh tìm kiếm."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Kết quả tìm kiếm hiển thị dưới dạng:",
+						"type": "mcq",
+						"options": ["Các liên kết đến trang web liên quan", "Các tệp trong ổ đĩa C", "Danh sách phần mềm đã cài", "Lịch thi đấu bóng đá"],
+						"correct": 0,
+						"explanation": "Kết quả thường là các liên kết dẫn đến trang web phù hợp."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Từ khóa tốt nhất để tìm về \"Con mèo\" là:",
+						"type": "mcq",
+						"options": ["Động vật bốn chân", "Meo meo", "Con mèo", "Thú cưng"],
+						"correct": 2,
+						"explanation": "Từ khóa cụ thể sẽ cho kết quả chính xác hơn."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Ưu điểm của máy tìm kiếm:",
+						"type": "mcq",
+						"options": ["Tìm thông tin cực nhanh và đa dạng", "Sửa máy tính bị hỏng", "Giúp máy chạy nhanh hơn", "Quét virus"],
+						"correct": 0,
+						"explanation": "Máy tìm kiếm giúp truy cập thông tin nhanh chóng và phong phú."
+					  },
+					  {
+						"diff": "Dễ - Điền từ",
+						"text": "Để tìm riêng ảnh, em chọn mục __________.",
+						"type": "fill",
+						"options": ["Hình ảnh", "Video", "Tin tức", "Bản đồ"],
+						"correct": 0,
+						"answer": "Hình ảnh",
+						"explanation": "Chọn mục Hình ảnh (Images) để lọc kết quả là ảnh."
+					  },
+					  {
+						"diff": "TB",
+						"text": "Nếu kết quả tìm kiếm quá rộng, em nên:",
+						"type": "mcq",
+						"options": ["Thêm từ khóa cụ thể hơn", "Tắt mạng đi bật lại", "Nhấn Enter thật nhiều lần", "Xóa trình duyệt"],
+						"correct": 0,
+						"explanation": "Từ khóa cụ thể giúp thu hẹp và chính xác kết quả."
+					  },
+					  {
+						"diff": "TB - Điền từ",
+						"text": "Thông tin trên Internet có thể __________, cần kiểm chứng.",
+						"type": "fill",
+						"options": ["sai", "đúng", "đầy đủ", "ngắn gọn"],
+						"correct": 0,
+						"answer": "sai",
+						"explanation": "Không phải mọi thông tin trên Internet đều chính xác."
+					  },
+					  {
+						"diff": "Nâng cao",
+						"text": "Tại sao cần so sánh thông tin từ nhiều trang web?",
+						"type": "mcq",
+						"options": ["Để máy tính hoạt động nhiều hơn", "Để đảm bảo thông tin chính xác và đầy đủ", "Vì quy định của nhà trường", "Để tăng tốc độ mạng"],
+						"correct": 1,
+						"explanation": "So sánh nhiều nguồn giúp xác minh độ tin cậy của thông tin."
+					  }
+					
+					
+					/*
+					
+                        { diff: "Dễ", text: "Đâu là máy tìm kiếm phổ biến?", type: "mcq", options: ["Paint", "Google", "Word", "PowerPoint"], correct: 1, explanation: "Google là công cụ tìm kiếm trên web phổ biến nhất." },
+                        { diff: "Dễ", text: "Để tìm kiếm, em cần nhập gì vào ô tìm kiếm?", type: "mcq", options: ["Mật khẩu", "Từ khóa", "Họ tên", "Địa chỉ nhà"], correct: 1, explanation: "Từ khóa là cụm từ ngắn gọn mô tả thông tin em muốn tìm." },
+                        { diff: "TB", text: "Nếu kết quả tìm kiếm quá rộng, em nên:", type: "mcq", options: ["Thêm từ khóa cụ thể hơn.", "Tắt mạng đi bật lại.", "Nhấn Enter thật nhiều lần.", "Xóa trình duyệt."], correct: 0, explanation: "Từ khóa càng chi tiết, kết quả tìm kiếm càng chính xác." },
+                        { diff: "Nâng cao", text: "Tại sao cần so sánh thông tin từ nhiều trang web?", type: "mcq", options: ["Để máy tính hoạt động nhiều hơn.", "Để đảm bảo thông tin chính xác và đầy đủ.", "Vì quy định của nhà trường.", "Để tăng tốc độ mạng."], correct: 1, explanation: "Không phải mọi thông tin trên Internet đều đúng, cần kiểm chứng từ nhiều nguồn." }
+                */    ]
+                },
+                {
+                    id: 5,
+                    title: "Bộ 5: Chụp ảnh, quay video",
+                    icon: "📷",
+                    questions: [
+					  {
+						"diff": "Dễ",
+						"text": "Thiết bị chuyên dùng ghi hình là:",
+						"type": "mcq",
+						"options": ["Máy in", "Máy ảnh/Điện thoại", "Loa", "Chuột"],
+						"correct": 1,
+						"explanation": "Máy ảnh hoặc điện thoại được dùng để chụp ảnh và quay video."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Phần mềm xem ảnh có sẵn trên Windows là:",
+						"type": "mcq",
+						"options": ["Photos", "Word", "Excel", "Calculator"],
+						"correct": 0,
+						"explanation": "Photos là phần mềm mặc định để xem ảnh trên Windows."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Video gồm có:",
+						"type": "mcq",
+						"options": ["Chữ đứng yên", "Hình ảnh chuyển động và âm thanh", "Chỉ có tiếng động", "Các con số nhảy múa"],
+						"correct": 1,
+						"explanation": "Video là sự kết hợp giữa hình ảnh chuyển động và âm thanh."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Cáp dùng nối điện thoại và máy tính thường là:",
+						"type": "mcq",
+						"options": ["Cáp USB", "Cáp điện", "Cáp TV", "Dây thừng"],
+						"correct": 0,
+						"explanation": "Cáp USB thường dùng để kết nối điện thoại với máy tính."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để video không bị rung, em nên:",
+						"type": "mcq",
+						"options": ["Chạy khi quay", "Cầm chắc bằng hai tay", "Lắc tay liên tục", "Để máy dưới đất"],
+						"correct": 1,
+						"explanation": "Cầm chắc bằng hai tay giúp video ổn định hơn."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Biểu tượng || trong trình xem video dùng để:",
+						"type": "mcq",
+						"options": ["Phát tiếp", "Tạm dừng", "Tắt máy", "Tăng âm lượng"],
+						"correct": 1,
+						"explanation": "Ký hiệu || là biểu tượng tạm dừng video."
+					  },
+					  {
+						"diff": "Dễ - Điền từ",
+						"text": "Nhấn phím __________ để xem ảnh tiếp theo.",
+						"type": "fill",
+						"options": ["mũi tên", "Enter", "Shift", "Ctrl"],
+						"correct": 0,
+						"answer": "mũi tên",
+						"explanation": "Phím mũi tên giúp chuyển sang ảnh tiếp theo."
+					  },
+					  {
+						"diff": "TB",
+						"text": "Xóa bớt ảnh hỏng giúp:",
+						"type": "mcq",
+						"options": ["Máy tính nhẹ hơn về trọng lượng", "Giải phóng bộ nhớ và dễ tìm ảnh đẹp", "Máy tính tự chụp ảnh đẹp hơn", "Màn hình sạch hơn"],
+						"correct": 1,
+						"explanation": "Xóa ảnh không cần thiết giúp tiết kiệm dung lượng và dễ quản lý."
+					  },
+					  {
+						"diff": "TB - Điền từ",
+						"text": "Cần xin phép trước khi __________ người khác.",
+						"type": "fill",
+						"options": ["chụp ảnh", "nói chuyện", "gọi điện", "nhắn tin"],
+						"correct": 0,
+						"answer": "chụp ảnh",
+						"explanation": "Cần tôn trọng quyền riêng tư khi chụp ảnh hoặc quay video người khác."
+					  },
+					  {
+						"diff": "Nâng cao",
+						"text": "Cách xử lý video dung lượng quá lớn khi gửi:",
+						"type": "mcq",
+						"options": ["Nén hoặc cắt bớt đoạn không cần thiết", "Gửi liên tục 100 lần", "Chụp màn hình video đó", "Mua điện thoại mới"],
+						"correct": 0,
+						"explanation": "Nén hoặc cắt video giúp giảm dung lượng để dễ gửi hơn."
+					  }
+					
+					
+					
+					/*
+                        { diff: "Dễ", text: "Thiết bị chuyên dùng ghi hình là:", type: "mcq", options: ["Máy in", "Máy ảnh/Điện thoại", "Loa", "Chuột"], correct: 1, explanation: "Máy ảnh và điện thoại thông minh có tích hợp ống kính camera." },
+                        { diff: "Dễ", text: "Cáp dùng nối điện thoại và máy tính thường là:", type: "mcq", options: ["Cáp USB", "Cáp điện", "Cáp TV", "Dây thừng"], correct: 0, explanation: "Cáp USB phổ biến để truyền dữ liệu giữa các thiết bị số." },
+                        { diff: "TB", text: "Xóa bớt ảnh hỏng giúp:", type: "mcq", options: ["Máy tính nhẹ hơn về trọng lượng.", "Giải phóng bộ nhớ và dễ tìm ảnh đẹp.", "Máy tính tự chụp ảnh đẹp hơn.", "Màn hình sạch hơn."], correct: 1, explanation: "Hình ảnh chiếm không gian lưu trữ số trên ổ cứng." },
+                        { diff: "TB - Điền từ", text: "Cần xin phép trước khi __________ người khác.", type: "fill", options: ["chụp ảnh / quay video", "nói chuyện", "nhìn", "gọi điện"], correct: 0, explanation: "Đó là hành động tôn trọng quyền riêng tư của người khác." }
+                */    ]
+                },
+                {
+                    id: 6,
+                    title: "Bộ 6: Sắp xếp thông tin",
+                    icon: "📁",
+                    questions: [
+					  {
+						"diff": "Dễ",
+						"text": "Thành phần chứa các tệp và thư mục con gọi là:",
+						"type": "mcq",
+						"options": ["Tệp", "Thư mục", "Thùng rác", "Biểu tượng"],
+						"correct": 1,
+						"explanation": "Thư mục dùng để chứa tệp và các thư mục con."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Biểu tượng thư mục mặc định có hình:",
+						"type": "mcq",
+						"options": ["Tờ giấy trắng", "Cái kẹp màu vàng", "Hình tam giác", "Hình nốt nhạc"],
+						"correct": 1,
+						"explanation": "Thư mục thường có biểu tượng hình cái kẹp màu vàng."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Thư mục nằm bên trong thư mục khác gọi là:",
+						"type": "mcq",
+						"options": ["Thư mục mẹ", "Thư mục con", "Thư mục gốc", "Thư mục rác"],
+						"correct": 1,
+						"explanation": "Thư mục con là thư mục nằm trong thư mục khác."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để mở một thư mục, em thực hiện:",
+						"type": "mcq",
+						"options": ["Nháy đúp chuột", "Nháy chuột trái một lần", "Nhấn phím Shift", "Rút dây nguồn"],
+						"correct": 0,
+						"explanation": "Nháy đúp chuột để mở thư mục."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Tên thư mục nên đặt như thế nào?",
+						"type": "mcq",
+						"options": ["Đặt thật dài", "Ngắn gọn, dễ hiểu, liên quan nội dung", "Chỉ dùng các con số", "Để trống tên"],
+						"correct": 1,
+						"explanation": "Tên thư mục rõ ràng giúp dễ quản lý và tìm kiếm."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Trong một thư mục mẹ có thể chứa:",
+						"type": "mcq",
+						"options": ["Chỉ tệp", "Chỉ thư mục con", "Cả tệp và các thư mục con", "Không chứa gì cả"],
+						"correct": 2,
+						"explanation": "Thư mục mẹ có thể chứa cả tệp và thư mục con."
+					  },
+					  {
+						"diff": "Dễ - Điền từ",
+						"text": "Sắp xếp thư mục theo cấu trúc hình __________ giúp tìm kiếm dễ dàng.",
+						"type": "fill",
+						"options": ["cây", "tròn", "vuông", "dài"],
+						"correct": 0,
+						"answer": "cây",
+						"explanation": "Cấu trúc cây giúp tổ chức dữ liệu rõ ràng và logic."
+					  },
+					  {
+						"diff": "TB",
+						"text": "Thao tác nào dùng để thay đổi tên thư mục?",
+						"type": "mcq",
+						"options": ["Delete", "Rename", "Copy", "Cut"],
+						"correct": 1,
+						"explanation": "Rename là lệnh dùng để đổi tên thư mục."
+					  },
+					  {
+						"diff": "TB - Điền từ",
+						"text": "Khi xóa thư mục cha, các thư mục con bên trong sẽ bị __________.",
+						"type": "fill",
+						"options": ["xóa", "giữ lại", "ẩn đi", "di chuyển"],
+						"correct": 0,
+						"answer": "xóa",
+						"explanation": "Xóa thư mục cha sẽ xóa toàn bộ nội dung bên trong."
+					  },
+					  {
+						"diff": "Nâng cao",
+						"text": "Tại sao không nên đặt nhiều tệp khác loại vào cùng một thư mục không có tên rõ ràng?",
+						"type": "mcq",
+						"options": ["Làm hỏng máy tính", "Khó tìm kiếm và quản lý thông tin", "Máy tính sẽ tự động xóa tệp", "Làm cho tệp bị virus"],
+						"correct": 1,
+						"explanation": "Sắp xếp không hợp lý sẽ gây khó khăn khi tìm kiếm và quản lý dữ liệu."
+					  }
+					
+					
+					
+					/*
+                        { diff: "Dễ", text: "Thành phần chứa các tệp và thư mục con gọi là:", type: "mcq", options: ["Tệp", "Thư mục", "Thùng rác", "Biểu tượng"], correct: 1, explanation: "Thư mục đóng vai trò như một kẹp tài liệu để tổ chức dữ liệu." },
+                        { diff: "Dễ", text: "Tên thư mục nên đặt như thế nào?", type: "mcq", options: ["Đặt thật dài.", "Ngắn gọn, dễ hiểu, liên quan nội dung.", "Chỉ dùng các con số.", "Để trống tên."], correct: 1, explanation: "Tên rõ ràng giúp việc tìm kiếm dữ liệu sau này nhanh chóng hơn." },
+                        { diff: "TB - Điền từ", text: "Khi xóa thư mục cha, các thư mục con bên trong sẽ bị _________.", type: "fill", options: ["xóa / mất", "giữ nguyên", "di chuyển", "đổi tên"], correct: 0, explanation: "Thư mục cha chứa toàn bộ cấu trúc bên trong nó." },
+                        { diff: "Nâng cao", text: "Tại sao không nên đặt nhiều tệp khác loại vào cùng một thư mục không có tên rõ ràng?", type: "mcq", options: ["Làm hỏng máy tính.", "Khó tìm kiếm và quản lý thông tin.", "Máy tính sẽ tự động xóa tệp.", "Làm cho tệp bị virus."], correct: 1, explanation: "Tổ chức thông tin khoa học là kĩ năng quan trọng để quản lý dữ liệu số." }
+                */    ]
+                },
+				{
+				id: 7,
+                    title: "Bộ 7: Luyện gõ bàn phím",
+                    icon: "📝",
+                    questions: [
+					  {
+						"diff": "Dễ",
+						"text": "Phần mềm luyện gõ bàn phím phổ biến là:",
+						"type": "mcq",
+						"options": ["Paint", "RapidTyping", "Word", "Windows"],
+						"correct": 1,
+						"explanation": "RapidTyping là phần mềm phổ biến để luyện gõ 10 ngón."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Khi luyện gõ, màu xanh lá cây trên phím ảo báo hiệu:",
+						"type": "mcq",
+						"options": ["Gõ sai", "Gõ đúng", "Phím bị hỏng", "Máy tính đang bận"],
+						"correct": 1,
+						"explanation": "Màu xanh lá cây cho biết em đã gõ đúng phím."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để gõ phím đúng, mắt nên nhìn vào:",
+						"type": "mcq",
+						"options": ["Bàn phím", "Ngón tay", "Màn hình", "Chuột"],
+						"correct": 2,
+						"explanation": "Nên nhìn màn hình để luyện thói quen gõ không nhìn bàn phím."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Ngón tay nào phụ trách phím Space?",
+						"type": "mcq",
+						"options": ["Ngón trỏ", "Ngón giữa", "Hai ngón cái", "Ngón út"],
+						"correct": 2,
+						"explanation": "Hai ngón cái dùng để nhấn phím Space."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Mục tiêu quan trọng nhất khi luyện gõ là:",
+						"type": "mcq",
+						"options": ["Gõ thật mạnh", "Gõ chính xác và đúng ngón", "Gõ bằng một tay", "Làm bàn phím kêu to"],
+						"correct": 1,
+						"explanation": "Gõ đúng và chính xác là nền tảng để tăng tốc độ."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Hàng phím nào là mốc để đặt các ngón tay?",
+						"type": "mcq",
+						"options": ["Hàng trên", "Hàng dưới", "Hàng cơ sở", "Hàng số"],
+						"correct": 2,
+						"explanation": "Hàng cơ sở là vị trí chuẩn để đặt tay khi gõ."
+					  },
+					  {
+						"diff": "Dễ - Điền từ",
+						"text": "Luyện tập thường xuyên giúp tăng __________ gõ phím.",
+						"type": "fill",
+						"options": ["tốc độ", "độ dài", "âm thanh", "màu sắc"],
+						"correct": 0,
+						"answer": "tốc độ",
+						"explanation": "Luyện tập đều đặn giúp cải thiện tốc độ gõ."
+					  },
+					  {
+						"diff": "TB",
+						"text": "Chỉ số WPM trong phần mềm luyện gõ nghĩa là gì?",
+						"type": "mcq",
+						"options": ["Số từ gõ được trong một phút", "Số lần gõ sai", "Thời gian nghỉ ngơi", "Độ bền bàn phím"],
+						"correct": 0,
+						"explanation": "WPM (Words Per Minute) là số từ gõ được trong một phút."
+					  },
+					  {
+						"diff": "TB - Điền từ",
+						"text": "Không nên __________ bàn phím khi gõ để tránh đau tay.",
+						"type": "fill",
+						"options": ["nhìn", "gõ", "chạm", "lau"],
+						"correct": 0,
+						"answer": "nhìn",
+						"explanation": "Không nên cúi nhìn bàn phím để tránh sai tư thế và mỏi cổ."
+					  },
+					  {
+						"diff": "Nâng cao",
+						"text": "Nếu em gõ sai một phím, phần mềm sẽ hiển thị màu gì?",
+						"type": "mcq",
+						"options": ["Màu xanh", "Màu vàng", "Màu đỏ", "Màu tím"],
+						"correct": 2,
+						"explanation": "Màu đỏ thường báo hiệu lỗi khi gõ sai."
+					  }]
+				
+				},
+				
+				
+				
+				
+                {
+                    id: 8,
+                    title: "Bộ 8: Làm quen với soạn thảo văn bản",
+                    icon: "📝",
+                    questions: [
+					    {
+							"diff": "Dễ",
+							"text": "Phần mềm soạn thảo văn bản phổ biến là:",
+							"type": "mcq",
+							"options": ["Microsoft Word", "Windows Media", "Google Maps", "Scratch"],
+							"correct": 0,
+							"explanation": "Microsoft Word là phần mềm soạn thảo văn bản phổ biến."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Vạch đứng nhấp nháy trên màn hình soạn thảo gọi là:",
+							"type": "mcq",
+							"options": ["Con trỏ chuột", "Con trỏ soạn thảo", "Thước đo", "Thanh cuộn"],
+							"correct": 1,
+							"explanation": "Đó là con trỏ soạn thảo, cho biết vị trí nhập văn bản."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Để xuống dòng mới, em nhấn phím:",
+							"type": "mcq",
+							"options": ["Space", "Enter", "Shift", "Alt"],
+							"correct": 1,
+							"explanation": "Phím Enter dùng để xuống dòng mới."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Phím dùng để viết hoa một chữ cái đơn lẻ:",
+							"type": "mcq",
+							"options": ["Giữ Shift + chữ cái đó", "Nhấn Caps Lock", "Nhấn Enter", "Nhấn Ctrl"],
+							"correct": 0,
+							"explanation": "Giữ Shift để viết hoa một chữ cái."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Để lưu văn bản, em vào menu File và chọn:",
+							"type": "mcq",
+							"options": ["New", "Open", "Save", "Print"],
+							"correct": 2,
+							"explanation": "Chọn Save để lưu văn bản."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Để gõ dấu tiếng Việt, em cần phần mềm hỗ trợ nào?",
+							"type": "mcq",
+							"options": ["Paint", "Unikey / VietKey", "Excel", "Chrome"],
+							"correct": 1,
+							"explanation": "Unikey hoặc VietKey hỗ trợ gõ tiếng Việt."
+						  },
+						  {
+							"diff": "Dễ - Điền từ",
+							"text": "Kiểu gõ phổ biến nhất hiện nay là kiểu __________.",
+							"type": "fill",
+							"options": ["Telex", "VNI", "ABC", "Unicode"],
+							"correct": 0,
+							"answer": "Telex",
+							"explanation": "Telex là kiểu gõ tiếng Việt phổ biến nhất."
+						  },
+						  {
+							"diff": "TB",
+							"text": "Để gõ chữ \"ư\" theo kiểu Telex, em gõ:",
+							"type": "mcq",
+							"options": ["uw", "uuu", "us", "ur"],
+							"correct": 0,
+							"explanation": "Trong Telex, 'ư' được gõ bằng 'uw'."
+						  },
+						  {
+							"diff": "TB - Điền từ",
+							"text": "Để mở một tệp văn bản đã có, em chọn lệnh __________.",
+							"type": "fill",
+							"options": ["Open", "Save", "New", "Print"],
+							"correct": 0,
+							"answer": "Open",
+							"explanation": "Open dùng để mở tệp đã lưu."
+						  },
+						  {
+							"diff": "Nâng cao",
+							"text": "Phím Caps Lock có tác dụng gì?",
+							"type": "mcq",
+							"options": ["Xóa chữ", "Viết hoa toàn bộ chữ cái khi bật", "Xuống dòng", "Lưu tệp"],
+							"correct": 1,
+							"explanation": "Caps Lock giúp viết hoa liên tục khi bật."
+						  }
+					
+					
+					/*
+					
+					
+                        { diff: "Dễ", text: "Phần mềm soạn thảo văn bản phổ biến là:", type: "mcq", options: ["Microsoft Word", "Windows Media", "Google Maps", "Scratch"], correct: 0, explanation: "Microsoft Word là trình xử lý văn bản hàng đầu thế giới." },
+                        { diff: "Dễ", text: "Để xuống dòng mới, em nhấn phím:", type: "mcq", options: ["Space", "Enter", "Shift", "Alt"], correct: 1, explanation: "Phím Enter dùng để kết thúc một đoạn văn và bắt đầu đoạn mới." },
+                        { diff: "Dễ", text: "Để lưu văn bản, em vào menu File và chọn:", type: "mcq", options: ["New", "Open", "Save", "Print"], correct: 2, explanation: "Save có nghĩa là Lưu trữ." },
+                        { diff: "Nâng cao", text: "Phím Caps Lock có tác dụng gì?", type: "mcq", options: ["Xóa chữ.", "Viết hoa toàn bộ chữ cái khi bật.", "Xuống dòng.", "Lưu tệp."], correct: 1, explanation: "Nó khóa trạng thái bàn phím ở chế độ chữ in hoa." }
+                */    ]
+                },
+                {
+                    id: 9,
+                    title: "Bài 9: Chỉnh sửa văn bản",
+                    icon: "✒️",
+                    questions: [
+					
+					  {
+						"diff": "Dễ",
+						"text": "Nút lệnh có chữ B dùng để:",
+						"type": "mcq",
+						"options": ["In đậm", "In nghiêng", "Gạch chân", "Chọn màu"],
+						"correct": 0,
+						"explanation": "Chữ B (Bold) dùng để làm đậm văn bản."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Nút lệnh có chữ I dùng để:",
+						"type": "mcq",
+						"options": ["In đậm", "In nghiêng", "Gạch chân", "Căn giữa"],
+						"correct": 1,
+						"explanation": "Chữ I (Italic) dùng để in nghiêng văn bản."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để thay đổi màu chữ, em chọn biểu tượng:",
+						"type": "mcq",
+						"options": ["Chữ B đậm", "Chữ A có gạch màu dưới chân", "Hình cái xô sơn", "Hình cây bút chì"],
+						"correct": 1,
+						"explanation": "Biểu tượng chữ A có gạch màu dùng để đổi màu chữ."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Thao tác kéo thả chuột qua một đoạn văn bản gọi là:",
+						"type": "mcq",
+						"options": ["Xóa văn bản", "Chọn (bôi đen) văn bản", "Sao chép văn bản", "Di chuyển văn bản"],
+						"correct": 1,
+						"explanation": "Kéo thả chuột là thao tác chọn (bôi đen) văn bản."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Căn lề đều hai bên có biểu tượng là các vạch:",
+						"type": "mcq",
+						"options": ["Lệch trái", "Ở giữa", "Bằng nhau hai đầu", "Lệch phải"],
+						"correct": 2,
+						"explanation": "Căn đều hai bên (Justify) có các vạch thẳng đều hai phía."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Cỡ chữ thường được biểu diễn bằng:",
+						"type": "mcq",
+						"options": ["Tên người", "Các con số", "Màu sắc", "Hình vẽ"],
+						"correct": 1,
+						"explanation": "Cỡ chữ được biểu diễn bằng số (ví dụ: 12, 14, 16...)."
+					  },
+					  {
+						"diff": "Dễ - Điền từ",
+						"text": "Font dùng để thay đổi __________ của chữ.",
+						"type": "fill",
+						"options": ["phông chữ", "màu sắc", "kích thước", "vị trí"],
+						"correct": 0,
+						"answer": "phông chữ",
+						"explanation": "Font quyết định kiểu dáng chữ."
+					  },
+					  {
+						"diff": "TB",
+						"text": "Để xóa một đoạn văn bản lớn nhanh nhất, em làm gì?",
+						"type": "mcq",
+						"options": ["Nhấn Backspace từng chữ", "Chọn đoạn văn bản đó rồi nhấn Delete", "Tắt máy tính", "Rút phích cắm chuột"],
+						"correct": 1,
+						"explanation": "Chọn đoạn văn bản rồi nhấn Delete để xóa nhanh."
+					  },
+					  {
+						"diff": "TB - Điền từ",
+						"text": "Nút lệnh có chữ U dùng để __________ văn bản.",
+						"type": "fill",
+						"options": ["gạch chân", "in đậm", "in nghiêng", "căn giữa"],
+						"correct": 0,
+						"answer": "gạch chân",
+						"explanation": "Chữ U (Underline) dùng để gạch chân văn bản."
+					  },
+					  {
+						"diff": "Nâng cao",
+						"text": "Sự khác biệt giữa phím Delete và Backspace là:",
+						"type": "mcq",
+						"options": ["Không có gì khác nhau", "Delete xóa bên phải, Backspace xóa bên trái con trỏ", "Delete dùng để lưu, Backspace dùng để xóa", "Một phím dùng cho số, một phím dùng cho chữ"],
+						"correct": 1,
+						"explanation": "Delete xóa ký tự bên phải, Backspace xóa bên trái con trỏ."
+					  }
+					
+					/*
+                        { diff: "Dễ", text: "Nút lệnh có chữ B dùng để:", type: "mcq", options: ["In đậm", "In nghiêng", "Gạch chân", "Chọn màu"], correct: 0, explanation: "B viết tắt của Bold (In đậm)." },
+                        { diff: "Dễ", text: "Thao tác kéo thả chuột qua một đoạn văn bản gọi là:", type: "mcq", options: ["Xóa văn bản", "Chọn (bôi đen) văn bản", "Sao chép văn bản", "Di chuyển văn bản"], correct: 1, explanation: "Cần chọn văn bản trước khi thực hiện các lệnh định dạng." },
+                        { diff: "Nâng cao", text: "Sự khác biệt giữa phím Delete và Backspace là:", type: "mcq", options: ["Không có gì khác nhau.", "Delete xóa bên phải, Backspace xóa bên trái con trỏ.", "Delete dùng để lưu, Backspace dùng để xóa.", "Một phím dùng cho số, một phím dùng cho chữ."], correct: 1, explanation: "Cả hai đều xóa kí tự nhưng ở hai hướng ngược nhau so với con trỏ." }
+                */
+					]
+                },
+				
+				
+				{
+                    id: 10,
+                    title: "Bài 10: Chèn hình ảnh vào văn bản",
+                    icon: "",
+                    questions: [
+					  {
+						"diff": "Dễ",
+						"text": "Để chèn ảnh, em vào thẻ (tab) nào?",
+						"type": "mcq",
+						"options": ["Home", "Insert", "View", "Layout"],
+						"correct": 1,
+						"explanation": "Thẻ Insert dùng để chèn các đối tượng như hình ảnh vào văn bản."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Nút lệnh chèn ảnh từ máy tính có tên là:",
+						"type": "mcq",
+						"options": ["Shapes", "Pictures", "Chart", "Table"],
+						"correct": 1,
+						"explanation": "Pictures là lệnh dùng để chèn ảnh từ máy tính."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để thay đổi kích thước ảnh, em kéo các nút tròn ở:",
+						"type": "mcq",
+						"options": ["Giữa bức ảnh", "Các góc hoặc cạnh của ảnh", "Trên bàn phím", "Trên màn hình"],
+						"correct": 1,
+						"explanation": "Kéo các nút ở góc hoặc cạnh để thay đổi kích thước ảnh."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Sau khi chèn, nếu ảnh quá lớn che hết chữ, em nên:",
+						"type": "mcq",
+						"options": ["Xóa chữ đi", "Thu nhỏ ảnh lại bằng cách kéo góc", "Tắt phần mềm", "Mua màn hình to hơn"],
+						"correct": 1,
+						"explanation": "Thu nhỏ ảnh giúp nội dung hiển thị hợp lý hơn."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Hình vẽ có sẵn (như hình vuông, hình tròn) nằm trong mục:",
+						"type": "mcq",
+						"options": ["Pictures", "Shapes", "Clip Art", "Word Art"],
+						"correct": 1,
+						"explanation": "Shapes chứa các hình vẽ cơ bản như hình vuông, tròn."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để di chuyển ảnh đến vị trí khác, em thực hiện:",
+						"type": "mcq",
+						"options": ["Nhấn phím Enter", "Kéo thả chuột trên bức ảnh", "Gõ tên bức ảnh", "Nhìn vào bức ảnh thật lâu"],
+						"correct": 1,
+						"explanation": "Kéo thả chuột để di chuyển ảnh."
+					  },
+					  {
+						"diff": "Dễ - Điền từ",
+						"text": "Muốn ảnh nằm gọn trong văn bản, em dùng tính năng __________ Text.",
+						"type": "fill",
+						"options": ["Wrap", "Insert", "Copy", "Move"],
+						"correct": 0,
+						"answer": "Wrap",
+						"explanation": "Wrap Text giúp điều chỉnh cách ảnh nằm trong văn bản."
+					  },
+					  {
+						"diff": "TB",
+						"text": "Thao tác xoay ảnh được thực hiện bằng cách kéo nút tròn có hình:",
+						"type": "mcq",
+						"options": ["Dấu cộng", "Mũi tên vòng tròn phía trên ảnh", "Dấu trừ", "Hình vuông"],
+						"correct": 1,
+						"explanation": "Nút xoay có hình mũi tên vòng tròn phía trên ảnh."
+					  },
+					  {
+						"diff": "TB - Điền từ",
+						"text": "Nên chọn ảnh có nội dung __________ với bài viết.",
+						"type": "fill",
+						"options": ["phù hợp", "ngẫu nhiên", "không liên quan", "trùng lặp"],
+						"correct": 0,
+						"answer": "phù hợp",
+						"explanation": "Ảnh phù hợp giúp nội dung rõ ràng và hấp dẫn hơn."
+					  },
+					  {
+						"diff": "Nâng cao",
+						"text": "Làm thế nào để chèn một hình ảnh từ Internet vào Word mà không cần tải về máy?",
+						"type": "mcq",
+						"options": ["Không thể làm được", "Sử dụng lệnh Copy Image trên web và Paste vào Word", "Chụp ảnh màn hình rồi vẽ lại", "Gõ địa chỉ trang web vào Word"],
+						"correct": 1,
+						"explanation": "Có thể sao chép ảnh từ web và dán trực tiếp vào Word."
+					  }
+					
+					/*
+                        { diff: "Dễ", text: "Nút lệnh có chữ B dùng để:", type: "mcq", options: ["In đậm", "In nghiêng", "Gạch chân", "Chọn màu"], correct: 0, explanation: "B viết tắt của Bold (In đậm)." },
+                        { diff: "Dễ", text: "Thao tác kéo thả chuột qua một đoạn văn bản gọi là:", type: "mcq", options: ["Xóa văn bản", "Chọn (bôi đen) văn bản", "Sao chép văn bản", "Di chuyển văn bản"], correct: 1, explanation: "Cần chọn văn bản trước khi thực hiện các lệnh định dạng." },
+                        { diff: "Nâng cao", text: "Sự khác biệt giữa phím Delete và Backspace là:", type: "mcq", options: ["Không có gì khác nhau.", "Delete xóa bên phải, Backspace xóa bên trái con trỏ.", "Delete dùng để lưu, Backspace dùng để xóa.", "Một phím dùng cho số, một phím dùng cho chữ."], correct: 1, explanation: "Cả hai đều xóa kí tự nhưng ở hai hướng ngược nhau so với con trỏ." }
+                */
+					]
+                },
+				
+				
+                {
+                    id: 11,
+                    title: "Bài 11B: Phần mềm trình chiếu",
+                    icon: "📊",
+                    questions: [
+                          {
+							"diff": "Dễ",
+							"text": "Phần mềm trình chiếu thường dùng là:",
+							"type": "mcq",
+							"options": ["MS Word", "MS PowerPoint", "MS Excel", "Paint"],
+							"correct": 1,
+							"explanation": "MS PowerPoint là phần mềm chuyên dùng để tạo bài trình chiếu."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Mỗi trang của bài trình chiếu gọi là:",
+							"type": "mcq",
+							"options": ["Slide (Trang chiếu)", "Page (Trang giấy)", "Sheet (Trang tính)", "Frame (Khung hình)"],
+							"correct": 0,
+							"explanation": "Mỗi trang trong PowerPoint gọi là một slide."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Để thêm một trang chiếu mới, em chọn:",
+							"type": "mcq",
+							"options": ["New Slide", "New Document", "New Window", "New Game"],
+							"correct": 0,
+							"explanation": "New Slide dùng để thêm trang chiếu mới."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Công dụng chính của PowerPoint là:",
+							"type": "mcq",
+							"options": ["Soạn thư", "Tạo bài thuyết trình sinh động", "Tính tiền hàng", "Quản lý ổ cứng"],
+							"correct": 1,
+							"explanation": "PowerPoint dùng để tạo các bài thuyết trình trực quan."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Để bắt đầu trình chiếu, em nhấn phím:",
+							"type": "mcq",
+							"options": ["F1", "F5", "F12", "Esc"],
+							"correct": 1,
+							"explanation": "Phím F5 dùng để bắt đầu trình chiếu."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Khu vực lớn nhất ở giữa màn hình PowerPoint dùng để:",
+							"type": "mcq",
+							"options": ["Lưu tệp", "Thiết kế nội dung trang chiếu", "Hiển thị danh mục tệp", "Chơi trò chơi"],
+							"correct": 1,
+							"explanation": "Đây là nơi chỉnh sửa nội dung slide."
+						  },
+						  {
+							"diff": "Dễ - Điền từ",
+							"text": "Bài trình chiếu gồm nhiều __________ kết hợp lại.",
+							"type": "fill",
+							"options": ["trang chiếu", "tệp", "hình ảnh", "bảng"],
+							"correct": 0,
+							"answer": "trang chiếu",
+							"explanation": "Bài trình chiếu được tạo từ nhiều slide."
+						  },
+						  {
+							"diff": "TB",
+							"text": "Để thoát khỏi chế độ trình chiếu, em nhấn:",
+							"type": "mcq",
+							"options": ["Enter", "Esc", "Space", "Tab"],
+							"correct": 1,
+							"explanation": "Phím Esc dùng để thoát trình chiếu."
+						  },
+						  {
+							"diff": "TB - Điền từ",
+							"text": "Trang đầu tiên của bài trình chiếu thường là trang __________.",
+							"type": "fill",
+							"options": ["tiêu đề", "nội dung", "kết luận", "hình ảnh"],
+							"correct": 0,
+							"answer": "tiêu đề",
+							"explanation": "Trang đầu thường là trang tiêu đề của bài."
+						  },
+						  {
+							"diff": "Nâng cao",
+							"text": "Điểm khác biệt lớn nhất giữa Word và PowerPoint là gì?",
+							"type": "mcq",
+							"options": ["Word dùng để in, PowerPoint dùng để vẽ", "Word tập trung soạn văn bản dài, PowerPoint tập trung trình diễn nội dung ngắn gọn và hình ảnh", "PowerPoint không thể gõ chữ", "Word không thể chèn ảnh"],
+							"correct": 1,
+							"explanation": "Word dùng cho văn bản dài, PowerPoint dùng cho trình chiếu ngắn gọn, trực quan."
+						  }                    
+					]
+                },
+				
+				{
+                    id: 12,
+                    title: "Bài 12: Thiết kế trang chiếu",
+                    icon: "🎦",
+                    questions: [
+                          {
+							"diff": "Dễ",
+							"text": "Để thay đổi mẫu thiết kế (nền) cho trang chiếu, em vào thẻ:",
+							"type": "mcq",
+							"options": ["Home", "Insert", "Design", "Animations"],
+							"correct": 2,
+							"explanation": "Thẻ Design dùng để thay đổi mẫu thiết kế (theme) cho slide."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Màu chữ nên chọn như thế nào so với màu nền?",
+							"type": "mcq",
+							"options": ["Càng giống nhau càng tốt", "Tương phản (đối lập) để dễ đọc", "Chỉ được dùng màu đen", "Chỉ được dùng màu trắng"],
+							"correct": 1,
+							"explanation": "Màu tương phản giúp chữ dễ đọc hơn."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Chữ trên trang chiếu nên:",
+							"type": "mcq",
+							"options": ["Càng nhiều càng tốt", "Ngắn gọn, súc tích, làm nổi bật ý chính", "Cỡ chữ thật nhỏ", "Toàn bộ là chữ viết hoa"],
+							"correct": 1,
+							"explanation": "Nội dung ngắn gọn giúp người xem dễ hiểu."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Để bài trình chiếu hấp dẫn, em nên:",
+							"type": "mcq",
+							"options": ["Chèn thêm hình ảnh minh họa sinh động", "Không chèn gì cả", "Chỉ dùng một màu đen trắng", "Gõ thật nhiều số"],
+							"correct": 0,
+							"explanation": "Hình ảnh giúp bài trình chiếu sinh động hơn."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Nút lệnh thay đổi bố cục trang chiếu là:",
+							"type": "mcq",
+							"options": ["Layout", "Style", "Format", "View"],
+							"correct": 0,
+							"explanation": "Layout dùng để thay đổi bố cục slide."
+						  },
+						  {
+							"diff": "Dễ",
+							"text": "Để xóa một trang chiếu, em chọn nó ở ngăn bên trái rồi nhấn:",
+							"type": "mcq",
+							"options": ["Enter", "Delete", "Space", "Shift"],
+							"correct": 1,
+							"explanation": "Phím Delete dùng để xóa slide đã chọn."
+						  },
+						  {
+							"diff": "Dễ - Điền từ",
+							"text": "Sử dụng các __________ có sẵn giúp bài trình chiếu chuyên nghiệp hơn.",
+							"type": "fill",
+							"options": ["mẫu", "hình ảnh", "âm thanh", "bảng"],
+							"correct": 0,
+							"answer": "mẫu",
+							"explanation": "Các mẫu (theme) giúp bài trình chiếu đẹp và đồng bộ."
+						  },
+						  {
+							"diff": "TB",
+							"text": "Khi thuyết trình, trang cuối cùng nên có nội dung gì?",
+							"type": "mcq",
+							"options": ["Danh sách học sinh lớp khác", "Lời cảm ơn người nghe", "Hình ảnh kỳ nghỉ của em", "Một bài văn dài"],
+							"correct": 1,
+							"explanation": "Trang cuối thường là lời cảm ơn để kết thúc bài trình bày."
+						  },
+						  {
+							"diff": "TB - Điền từ",
+							"text": "Không nên dùng quá nhiều __________ khác nhau trên một trang chiếu vì gây rối mắt.",
+							"type": "fill",
+							"options": ["màu sắc", "chữ", "hình ảnh", "âm thanh"],
+							"correct": 0,
+							"answer": "màu sắc",
+							"explanation": "Quá nhiều màu sắc sẽ gây rối mắt và khó nhìn."
+						  },
+						  {
+							"diff": "Nâng cao",
+							"text": "Tại sao bài trình chiếu nên có ít chữ hơn bài soạn thảo văn bản?",
+							"type": "mcq",
+							"options": ["Vì người nghe không có thời gian đọc văn bản dài khi đang nghe nói", "Vì PowerPoint không cho phép gõ nhiều chữ", "Vì chữ nhiều sẽ làm máy tính bị treo", "Vì gõ chữ nhiều rất mỏi tay"],
+							"correct": 0,
+							"explanation": "Người nghe cần tập trung nghe thuyết trình, không đọc quá nhiều chữ."
+						  }    
+					]
+                },
+				
+                {
+                    id: 13,
+                    title: "Bài 13: Làm quen Scratch",
+                    icon: "🐈",
+                    questions: [
+                      {
+						"diff": "Dễ",
+						"text": "Nhân vật mặc định khi mở Scratch là:",
+						"type": "mcq",
+						"options": ["Con chó", "Con mèo", "Con gấu", "Một cậu bé"],
+						"correct": 1,
+						"explanation": "Nhân vật mặc định trong Scratch là chú mèo Scratch."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Các lệnh trong Scratch được thực hiện bằng cách:",
+						"type": "mcq",
+						"options": ["Gõ code bằng bàn phím", "Kéo thả các khối lệnh lắp ghép", "Vẽ bằng bút chì", "Nói vào micro"],
+						"correct": 1,
+						"explanation": "Scratch sử dụng phương pháp kéo thả khối lệnh."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Nơi nhân vật hoạt động gọi là:",
+						"type": "mcq",
+						"options": ["Khu vực kịch bản", "Sân khấu", "Thư viện nhân vật", "Bảng màu"],
+						"correct": 1,
+						"explanation": "Sân khấu là nơi nhân vật biểu diễn."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để nhân vật bắt đầu hành động khi nhấn lá cờ xanh, em dùng lệnh trong nhóm:",
+						"type": "mcq",
+						"options": ["Motion (Chuyển động)", "Events (Sự kiện)", "Looks (Hiển thị)", "Control (Điều khiển)"],
+						"correct": 1,
+						"explanation": "Nhóm Events chứa lệnh bắt đầu khi nhấn cờ xanh."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để đổi tên nhân vật, em gõ vào ô:",
+						"type": "mcq",
+						"options": ["Sprite", "Stage", "Code", "Sounds"],
+						"correct": 0,
+						"explanation": "Tên nhân vật được thay đổi trong phần Sprite."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Nhóm lệnh màu xanh dương (Motion) dùng để:",
+						"type": "mcq",
+						"options": ["Đổi màu nhân vật", "Điều khiển nhân vật di chuyển", "Phát âm thanh", "Thay đổi kích thước"],
+						"correct": 1,
+						"explanation": "Motion dùng để điều khiển chuyển động của nhân vật."
+					  },
+					  {
+						"diff": "Dễ - Điền từ",
+						"text": "Tập hợp các khối lệnh điều khiển một nhân vật gọi là __________.",
+						"type": "fill",
+						"options": ["kịch bản", "chương trình", "trò chơi", "lệnh"],
+						"correct": 0,
+						"answer": "kịch bản",
+						"explanation": "Các khối lệnh ghép lại tạo thành kịch bản."
+					  },
+					  {
+						"diff": "TB",
+						"text": "Để nhân vật nói \"Xin chào\" trong 2 giây, em dùng nhóm lệnh:",
+						"type": "mcq",
+						"options": ["Sound", "Looks", "Motion", "Events"],
+						"correct": 1,
+						"explanation": "Nhóm Looks chứa lệnh hiển thị lời nói."
+					  },
+					  {
+						"diff": "TB - Điền từ",
+						"text": "Nhấn vào nút hình __________ màu đỏ để dừng chương trình.",
+						"type": "fill",
+						"options": ["tròn", "vuông", "tam giác", "ngôi sao"],
+						"correct": 0,
+						"answer": "tròn",
+						"explanation": "Nút đỏ hình tròn dùng để dừng chương trình."
+					  },
+					  {
+						"diff": "Nâng cao",
+						"text": "Tại sao Scratch lại dùng các khối lệnh nhiều màu sắc?",
+						"type": "mcq",
+						"options": ["Để trang trí cho đẹp", "Để phân loại các nhóm chức năng khác nhau cho dễ nhớ", "Để máy tính chạy nhanh hơn", "Vì trẻ em thích màu sắc"],
+						"correct": 1,
+						"explanation": "Màu sắc giúp phân biệt các nhóm lệnh rõ ràng."
+					  }
+                    ]
+                },
+				
+                {
+                    id: 14,
+                    title: "Bài 14: Điều khiển nhân vật",
+                    icon: "🎮",
+                    questions: [
+                      {
+						"diff": "Dễ",
+						"text": "Khối lệnh 'move 10 steps' có tác dụng:",
+						"type": "mcq",
+						"options": ["Nhân vật đi lùi 10 bước", "Nhân vật tiến lên 10 bước", "Nhân vật nhảy lên cao", "Nhân vật biến mất"],
+						"correct": 1,
+						"explanation": "Lệnh move giúp nhân vật tiến về phía trước theo số bước quy định."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để nhân vật quay sang phải 15 độ, em dùng lệnh:",
+						"type": "mcq",
+						"options": ["Turn right 15 degrees", "Turn left 15 degrees", "Point in direction 90", "Go to random position"],
+						"correct": 0,
+						"explanation": "Turn right 15 degrees giúp xoay nhân vật sang phải."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Muốn nhân vật di chuyển liên tục không dừng, em dùng khối:",
+						"type": "mcq",
+						"options": ["Repeat 10", "Forever", "Wait 1 second", "If on edge, bounce"],
+						"correct": 1,
+						"explanation": "Forever giúp lặp lại hành động liên tục."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Lệnh 'if on edge, bounce' giúp nhân vật:",
+						"type": "mcq",
+						"options": ["Đi xuyên qua tường", "Bật lại khi chạm cạnh sân khấu", "Dừng lại khi chạm cạnh", "Đổi màu khi chạm cạnh"],
+						"correct": 1,
+						"explanation": "Lệnh này giúp nhân vật bật lại khi chạm mép sân khấu."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để thay đổi tốc độ nhân vật, em thay đổi con số trong lệnh:",
+						"type": "mcq",
+						"options": ["Move ... steps", "Say ... for ... seconds", "Change size by ...", "Wait ... seconds"],
+						"correct": 0,
+						"explanation": "Tăng số bước trong lệnh move giúp nhân vật di chuyển nhanh hơn."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Nhóm lệnh Control (màu vàng cam) chứa khối:",
+						"type": "mcq",
+						"options": ["Chuyển động", "Lặp lại và Đợi", "Vẽ hình", "Tính toán"],
+						"correct": 1,
+						"explanation": "Nhóm Control chứa các lệnh lặp và điều khiển thời gian."
+					  },
+					  {
+						"diff": "Dễ - Điền từ",
+						"text": "Khối lệnh __________ giúp chương trình tạm dừng một khoảng thời gian.",
+						"type": "fill",
+						"options": ["Wait", "Move", "Repeat", "Turn"],
+						"correct": 0,
+						"answer": "Wait",
+						"explanation": "Wait dùng để tạm dừng chương trình trong thời gian xác định."
+					  },
+					  {
+						"diff": "TB",
+						"text": "Nếu muốn nhân vật đi sang trái, em đặt hướng (direction) là:",
+						"type": "mcq",
+						"options": ["90", "-90", "0", "180"],
+						"correct": 1,
+						"explanation": "Hướng -90 giúp nhân vật quay sang trái."
+					  },
+					  {
+						"diff": "TB - Điền từ",
+						"text": "Khối lệnh __________ dùng để thực hiện các hành động nhiều lần theo số lần định trước.",
+						"type": "fill",
+						"options": ["Repeat", "Wait", "Move", "Turn"],
+						"correct": 0,
+						"answer": "Repeat",
+						"explanation": "Repeat giúp lặp lại hành động theo số lần nhất định."
+					  },
+					  {
+						"diff": "Nâng cao",
+						"text": "Làm thế nào để nhân vật không bị lộn ngược khi bật lại từ cạnh sân khấu?",
+						"type": "mcq",
+						"options": ["Không thể sửa được", "Chọn kiểu xoay (Rotation style) là \"left-right\"", "Xóa nhân vật đi làm lại", "Cho nhân vật đi thật chậm"],
+						"correct": 1,
+						"explanation": "Chọn kiểu xoay left-right giúp nhân vật không bị lộn ngược."
+					  }
+                    ]
+                },
+				
+				
+                {
+                    id: 15,
+                    title: "Bài 15: Tạo chương trình của em",
+                    icon: "👩🏻‍💻",
+                    questions: [
+                      {
+						"diff": "Dễ",
+						"text": "Bước đầu tiên khi tạo một dự án Scratch là:",
+						"type": "mcq",
+						"options": ["Chia sẻ cho bạn bè", "Lên ý tưởng về nhân vật và kịch bản", "Xóa phần mềm", "Tắt máy tính"],
+						"correct": 1,
+						"explanation": "Lên ý tưởng là bước quan trọng đầu tiên khi tạo dự án."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để thay đổi hình nền cho sân khấu, em vào mục:",
+						"type": "mcq",
+						"options": ["Choose a Sprite", "Choose a Backdrop", "Extension", "Tutorials"],
+						"correct": 1,
+						"explanation": "Backdrop dùng để thay đổi hình nền sân khấu."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Một dự án có thể có bao nhiêu nhân vật?",
+						"type": "mcq",
+						"options": ["Chỉ duy nhất 1", "Tối đa 2", "Nhiều nhân vật tùy ý", "Không cần nhân vật nào"],
+						"correct": 2,
+						"explanation": "Scratch cho phép thêm nhiều nhân vật."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Sau khi hoàn thành kịch bản, em nên làm gì?",
+						"type": "mcq",
+						"options": ["Chạy thử để kiểm tra lỗi", "Tắt máy luôn", "Không cần xem lại", "Xóa hết đi gõ lại"],
+						"correct": 0,
+						"explanation": "Chạy thử giúp phát hiện lỗi để sửa."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Để chia sẻ niềm vui, em có thể cho bạn xem sản phẩm bằng cách:",
+						"type": "mcq",
+						"options": ["Trình chiếu dự án trên máy tính", "Giấu kỹ trong cặp", "Nói dối là mình chưa làm", "Vứt máy tính đi"],
+						"correct": 0,
+						"explanation": "Trình chiếu giúp bạn bè xem sản phẩm dễ dàng."
+					  },
+					  {
+						"diff": "Dễ",
+						"text": "Khi xem sản phẩm của bạn, em nên:",
+						"type": "mcq",
+						"options": ["Chê bai thật nhiều", "Khen ngợi và góp ý chân thành", "Tranh giành máy tính", "Không quan tâm"],
+						"correct": 1,
+						"explanation": "Thái độ tích cực giúp học hỏi và tiến bộ."
+					  },
+					  {
+						"diff": "Dễ - Điền từ",
+						"text": "Khi dùng hình ảnh của người khác vào dự án, em nên __________ nguồn.",
+						"type": "fill",
+						"options": ["ghi", "xóa", "ẩn", "sửa"],
+						"correct": 0,
+						"answer": "ghi",
+						"explanation": "Cần ghi nguồn để tôn trọng bản quyền."
+					  },
+					  {
+						"diff": "TB",
+						"text": "Để nhân vật thay đổi hình dạng (ví dụ mèo co chân rồi duỗi chân), em dùng lệnh:",
+						"type": "mcq",
+						"options": ["Next Costume", "Next Backdrop", "Move 10 steps", "Play sound"],
+						"correct": 0,
+						"explanation": "Next Costume giúp thay đổi hình dạng nhân vật."
+					  },
+					  {
+						"diff": "TB - Điền từ",
+						"text": "Việc tạo ra sản phẩm số giúp em rèn luyện tư duy __________.",
+						"type": "fill",
+						"options": ["sáng tạo", "ngẫu nhiên", "lặp lại", "đơn giản"],
+						"correct": 0,
+						"answer": "sáng tạo",
+						"explanation": "Tạo sản phẩm giúp phát triển tư duy sáng tạo."
+					  },
+					  {
+						"diff": "Nâng cao",
+						"text": "Tại sao bước \"Chạy thử và sửa lỗi\" lại quan trọng nhất trong lập trình?",
+						"type": "mcq",
+						"options": ["Vì nó giúp phát hiện những chỗ nhân vật làm sai ý mình để sửa lại cho đúng", "Vì phần mềm bắt buộc phải làm vậy", "Để làm cho máy tính nóng lên", "Để có lý do được ngồi máy tính lâu hơn"],
+						"correct": 0,
+						"explanation": "Chạy thử giúp phát hiện và sửa lỗi để chương trình hoạt động đúng."
+					  }
+                    ]
+                }
+            ]
+        };
+
+        const state = {
+            currentTopicIndex: 0,
+            currentQuestionIndex: 0,
+            score: 0,
+            hasAnswered: false
+        };
+
+        let diffChartInstance = null;
+        let topicChartInstance = null;
+
+        function initApp() {
+            bindNavigation();
+            initCharts();
+            renderTopicsGrid();
+        }
+
+        function bindNavigation() {
+            document.getElementById('btn-overview').addEventListener('click', () => switchView('overview'));
+            document.getElementById('btn-practice').addEventListener('click', () => switchView('topics'));
+            document.getElementById('btn-start-practice').addEventListener('click', () => switchView('topics'));
+            document.getElementById('btn-back-topics').addEventListener('click', () => switchView('topics'));
+            
+            document.getElementById('btn-next-question').addEventListener('click', handleNextQuestion);
+            document.getElementById('btn-prev-question').addEventListener('click', handlePrevQuestion);
+        }
+
+        function switchView(viewName) {
+            document.getElementById('view-overview').classList.add('hide');
+            document.getElementById('view-topics').classList.add('hide');
+            document.getElementById('view-quiz').classList.add('hide');
+
+            if(viewName === 'overview') {
+                document.getElementById('view-overview').classList.remove('hide');
+                document.getElementById('btn-overview').classList.replace('bg-stone-800', 'bg-blue-600');
+                document.getElementById('btn-practice').classList.replace('bg-blue-600', 'bg-stone-800');
+            } else if (viewName === 'topics') {
+                document.getElementById('view-topics').classList.remove('hide');
+                document.getElementById('btn-overview').classList.replace('bg-blue-600', 'bg-stone-800');
+                document.getElementById('btn-practice').classList.replace('bg-stone-800', 'bg-blue-600');
+            } else if (viewName === 'quiz') {
+                document.getElementById('view-quiz').classList.remove('hide');
+                document.getElementById('btn-overview').classList.replace('bg-blue-600', 'bg-stone-800');
+                document.getElementById('btn-practice').classList.replace('bg-stone-800', 'bg-blue-600');
+            }
+        }
+
+        function initCharts() {
+            const ctxDiff = document.getElementById('difficultyChart').getContext('2d');
+            diffChartInstance = new Chart(ctxDiff, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Dễ (70%)', 'Trung bình (20%)', 'Nâng cao (10%)'],
+                    datasets: [{
+                        data: [105, 30, 15],
+                        backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            const ctxTopic = document.getElementById('topicChart').getContext('2d');
+            const topicLabels = Array.from({length: 15}, (_, i) => `Bài ${i+1}`);
+            const topicData = Array.from({length: 15}, () => 10);
+            
+            topicChartInstance = new Chart(ctxTopic, {
+                type: 'bar',
+                data: {
+                    labels: topicLabels,
+                    datasets: [{
+                        label: 'Số câu hỏi',
+                        data: topicData,
+                        backgroundColor: '#6366f1',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 12 }
+                    }
+                }
+            });
+        }
+
+        function renderTopicsGrid() {
+            const grid = document.getElementById('topics-grid');
+            grid.innerHTML = '';
+            
+            appData.topics.forEach((topic, index) => {
+                const card = document.createElement('button');
+                card.className = 'topic-card bg-white p-5 rounded-xl border border-stone-200 text-left flex items-start gap-4 hover:border-blue-300';
+                card.onclick = () => startQuiz(index);
+                
+                card.innerHTML = `
+                    <div class="text-3xl">${topic.icon}</div>
+                    <div>
+                        <h3 class="font-bold text-stone-800 leading-tight">${topic.title}</h3>
+                        <p class="text-sm text-stone-500 mt-1">${topic.questions.length} câu hỏi ôn tập</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function startQuiz(topicIndex) {
+            state.currentTopicIndex = topicIndex;
+            state.currentQuestionIndex = 0;
+            state.hasAnswered = false;
+            
+            document.getElementById('quiz-topic-title').innerText = appData.topics[topicIndex].title;
+            switchView('quiz');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const topic = appData.topics[state.currentTopicIndex];
+            const question = topic.questions[state.currentQuestionIndex];
+            state.hasAnswered = false;
+
+            document.getElementById('quiz-progress').innerText = `Câu ${state.currentQuestionIndex + 1}/${topic.questions.length}`;
+            
+            const diffEl = document.getElementById('quiz-difficulty');
+            diffEl.innerText = question.diff;
+            diffEl.className = `inline-block px-2 py-1 text-xs font-bold rounded mb-3 ${getDiffColor(question.diff)}`;
+            
+            document.getElementById('quiz-question-text').innerText = question.text;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((optText, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left p-4 rounded-xl border-2 border-stone-100 bg-white hover:bg-stone-50 hover:border-blue-200 font-medium text-stone-800 transition-colors flex items-center gap-3';
+                btn.innerHTML = `<span class="flex items-center justify-center w-8 h-8 rounded-full bg-stone-100 text-stone-600 text-sm">${String.fromCharCode(65 + i)}</span> <span>${optText}</span>`;
+                btn.onclick = () => submitAnswer(i, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('quiz-feedback').classList.add('hide');
+            
+            document.getElementById('btn-prev-question').disabled = (state.currentQuestionIndex === 0);
+            document.getElementById('btn-next-question').innerText = (state.currentQuestionIndex === topic.questions.length - 1) ? 'Hoàn Thành ✓' : 'Câu Tiếp ➡️';
+        }
+
+        function submitAnswer(selectedIndex, btnElement) {
+            if (state.hasAnswered) return;
+            state.hasAnswered = true;
+
+            const topic = appData.topics[state.currentTopicIndex];
+            const question = topic.questions[state.currentQuestionIndex];
+            const isCorrect = selectedIndex === question.correct;
+            const optionsBtns = document.getElementById('quiz-options').children;
+
+            for (let i = 0; i < optionsBtns.length; i++) {
+                optionsBtns[i].disabled = true;
+                optionsBtns[i].classList.remove('hover:bg-stone-50', 'hover:border-blue-200');
+                if (i === question.correct) {
+                    optionsBtns[i].classList.replace('border-stone-100', 'border-emerald-500');
+                    optionsBtns[i].classList.add('bg-emerald-50');
+                    optionsBtns[i].querySelector('span').classList.replace('bg-stone-100', 'bg-emerald-500');
+                    optionsBtns[i].querySelector('span').classList.replace('text-stone-600', 'text-white');
+                } else if (i === selectedIndex && !isCorrect) {
+                    optionsBtns[i].classList.replace('border-stone-100', 'border-rose-500');
+                    optionsBtns[i].classList.add('bg-rose-50');
+                    optionsBtns[i].querySelector('span').classList.replace('bg-stone-100', 'bg-rose-500');
+                    optionsBtns[i].querySelector('span').classList.replace('text-stone-600', 'text-white');
+                } else {
+                    optionsBtns[i].classList.add('opacity-50');
+                }
+            }
+
+            const feedbackEl = document.getElementById('quiz-feedback');
+            const feedbackTitle = document.getElementById('quiz-feedback-title');
+            const feedbackText = document.getElementById('quiz-feedback-text');
+
+            feedbackEl.classList.remove('hide', 'bg-emerald-50', 'border-emerald-200', 'bg-rose-50', 'border-rose-200');
+            
+            if (isCorrect) {
+                feedbackEl.classList.add('bg-emerald-50', 'border-emerald-200');
+                feedbackTitle.className = 'font-bold text-lg mb-1 text-emerald-800';
+                feedbackTitle.innerText = '✅ Chính xác!';
+                feedbackText.className = 'text-emerald-900';
+            } else {
+                feedbackEl.classList.add('bg-rose-50', 'border-rose-200');
+                feedbackTitle.className = 'font-bold text-lg mb-1 text-rose-800';
+                feedbackTitle.innerText = '❌ Chưa đúng!';
+                feedbackText.className = 'text-rose-900';
+            }
+            
+            feedbackText.innerText = question.explanation;
+        }
+
+        function handleNextQuestion() {
+            const topic = appData.topics[state.currentTopicIndex];
+            if (state.currentQuestionIndex < topic.questions.length - 1) {
+                state.currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                switchView('topics');
+            }
+        }
+
+        function handlePrevQuestion() {
+            if (state.currentQuestionIndex > 0) {
+                state.currentQuestionIndex--;
+                renderQuestion();
+            }
+        }
+
+        function getDiffColor(diff) {
+            if(diff.includes("Dễ")) return "bg-blue-100 text-blue-800";
+            if(diff.includes("TB")) return "bg-amber-100 text-amber-800";
+            if(diff.includes("Nâng cao")) return "bg-rose-100 text-rose-800";
+            return "bg-stone-200 text-stone-700";
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
